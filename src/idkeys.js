@@ -144,20 +144,37 @@ export const cooked_food = {
 	"sushi": 226,
 };
 
-export const drink = {
-    "coffee": 160,
-    "ice_cream": 165,
-	"milk": 162,
-    "soda": 161,
-    "tea": 166,
-    "water": 163,
-    "wine": 164,
-};
+// export const cooked_food = {
+//     227: "apple_plate",
+//     230: "cake_slice",
+//     232: "candy_plate",
+//     228: "cherry_plate",
+//     231: "cupcake",
+//     224: "egg_rice",
+// 	233: "flan",
+//     237: "fried_egg",
+//     225: "fried_shrimp",
+//     234: "kebab",
+//     236: "not_food",
+// 	235: "pizza",
+//     229: "soup",
+// 	226: "sushi",
+// };
 
-export const drink_recipes = {
-    "coffee": [item_key.coffee_beans],
-    "ice_cream": [item_key.ice_cream],
-};
+export const fryer_recipes_order = [
+    "fried_shrimp",
+];
+
+export const stove_recipes_order = [
+    "cake_slice",
+    "egg_rice",
+	"flan",
+    "fried_egg",
+    "kebab",
+	"pizza",
+    "soup",
+	"sushi",
+];
 
 export const stove_recipes = {
     "cake_slice": [item_key.flour, item_key.egg, item_key.milk, item_key.frosting],

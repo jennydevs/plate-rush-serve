@@ -963,7 +963,10 @@ export function npcCheck(belt_items) {
                         npcs[i].sitting = false;
 
                         throwAwayItem(b_t[j][1]); // put remove item in it
-                        throwAwayItem(getItemOnTile(tile.x, tile.y)); // throw away anything sitting on the table if served
+                        let table_item = getItemOnTile(tile.x, tile.y);
+                        if (table_item !== -1) { // throw away anything sitting on the table if served
+                            throwAwayItem(table_item);
+                        }
                         addItem(b_t[j][0].spr, tile);
                         belts[belt_id].full = false;
                         b_t.splice(j, 1); // no double orders for the table

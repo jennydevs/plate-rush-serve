@@ -2,6 +2,9 @@ import { direction, spots, cooking_utensil, storage_color, storage_type,
 	cooked_food, book, stove_recipes, fryer_recipes, one_ingredient_recipes, 
 	liquid_fridge_contents, solid_fridge_contents, veggie_fridge_contents,
 	dry_storage_contents, changed_cooking_utensil, score
+
+
+	,item_key,fryer_recipes_order, stove_recipes_order,
 } from "./idkeys.js";
 import { getMapTile, setMapTile, removeMapTile, map_item, 
 	map_furniture, map_counter_item, map_floor_item, clearMap
@@ -99,8 +102,7 @@ export function addItem(item_spr, spot) {
 		item.contents = [];
 		item.full = false;
 	}
-	else if (item_spr == book.drink_book 
-		|| item_spr == book.fryer_book 
+	else if (item_spr == book.fryer_book 
 		|| item_spr == book.stove_book) {
 
 		item.book_type = -1;
@@ -375,7 +377,7 @@ function pickUpItem(held_item, check_item, spot) {
 
 export function throwAwayItem(index) { // figure this out
 	if ( index == -1 || typeof items[index] == "undefined") {
-		console.log("Can't throw away")
+		console.log("Can't throw away", index)
 		return;	
 	}
 
@@ -829,63 +831,54 @@ function drawStorageMenu() {
 }
 
 export function drawRecipe(held_item) {
-    let book_recipes = (held_item.book_type == book.fryer_book ? fryer_recipes : stove_recipes);
+    const book_recipe_pages = (held_item.book_type == book.fryer_book ? fryer_recipes_order : stove_recipes_order);
+	const book_recipes = (held_item.book_type == book.fryer_book ? fryer_recipes : stove_recipes);
+	const min_choice = 0;
+    const max_choice = book_recipe_pages.length;
 
-    let current_select = held_item.current_selection;
-    let min_choice = 0;
-    let max_choice = held_item.max_choice;
+    const currently_selected = held_item.current_selection;
+    const recipe = book_recipe_pages[currently_selected];
+	const recipe_contents = book_recipes[recipe];
+    const recipe_image = item_key[recipe];
+    const recipe_length = recipe_contents.length;
 
-    let counter = 0;
-    let current_recipe = -1;
-
-    for (const [key, recipe] of Object.entries(book_recipes)) { // could be done better
-        if (counter == current_select) {
-            current_recipe = key;
-            break;
-        }
-
-        counter++;
-    }
-
-    let recipe_image = cooked_food[current_recipe];
-    let recipe_contents = book_recipes[current_recipe];
-    let recipe_length = recipe_contents.length;
-
-    let left_side = Math.floor(recipe_length / 2);
+    const left_side = Math.floor(recipe_length / 2);
     let offset_x = 0;
-    let offset_y = -8;
-    let image_offset_y = -16;
+    const offset_y = -8;
+    const image_offset_y = -16;
+	const bg = 48;
+	const arrow = 131;
 
-    if (current_select !== min_choice) { // left arrow
-        sprite (131, held_item.x - 8, held_item.y + image_offset_y, true);
+	// Recipe with arrows
+
+    if (currently_selected !== min_choice) { // left
+        sprite(arrow, held_item.x - 8, held_item.y + image_offset_y, true);
+    }
+	if (currently_selected !== max_choice - 1) { // right
+        sprite(arrow, held_item.x + 8, held_item.y + image_offset_y);
     }
 
-    sprite(48, held_item.x, held_item.y + image_offset_y);
-    sprite(recipe_image, held_item.x, held_item.y + image_offset_y);  // product image
+    sprite(bg, held_item.x, held_item.y + image_offset_y);
+    sprite(recipe_image, held_item.x, held_item.y + image_offset_y);
 
-    if (current_select !== max_choice - 1) {
-        sprite (131, held_item.x + 8, held_item.y + image_offset_y); // right arrow
-    }
+	// Recipe contents
 
-    if (recipe_length % 2 == 0) {
+    if (recipe_length % 2 == 0) { // Even ingredients
         offset_x = 9;
-        let extra_offset = 0;
-
         let starting_offset = (held_item.x - 4) - (offset_x * (left_side - 1));
 
         for (let i = 0; i < recipe_length; i++) {
-            sprite(48, starting_offset + extra_offset, held_item.y + offset_y);
-            sprite(recipe_contents[i], starting_offset + extra_offset, held_item.y + offset_y);
+            sprite(bg, starting_offset, held_item.y + offset_y);
+            sprite(recipe_contents[i], starting_offset, held_item.y + offset_y);
             starting_offset += offset_x;
         }
     }
-    else {
+    else { // Odd ingredients
         offset_x = 9;
-
         let starting_offset = held_item.x - (offset_x * left_side);
 
         for (let i = 0; i < recipe_length; i++) {
-            sprite(48, starting_offset, held_item.y + offset_y);
+            sprite(bg, starting_offset, held_item.y + offset_y);
             sprite(recipe_contents[i], starting_offset, held_item.y + offset_y);
             starting_offset += offset_x;
         }

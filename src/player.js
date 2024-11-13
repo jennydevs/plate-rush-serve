@@ -508,7 +508,7 @@ function checkForItem(holding_item, held_item, carrying_container, opened_storag
 }
 
 function moveBookSelection(move, selection, max_choice) {
-	let min_choice = 0; // could change to "lock" recipes
+	const min_choice = 0; // could change to "lock" recipes
 
 	if (move == direction.right) {
 		selection++;
@@ -518,7 +518,7 @@ function moveBookSelection(move, selection, max_choice) {
 		selection--;
 		if (selection < min_choice) { selection = min_choice; }
 	}
-
+    
 	return selection;
 }
 
