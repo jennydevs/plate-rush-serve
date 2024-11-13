@@ -1,12 +1,11 @@
 import { getTile, getMapTile, map_solid, map_item, map_furniture } from "./map.js";
-import { confirmFront, checkStorage, moveStorageSelection, grabStorageItem, cookTheItems, throwAwayItem, locateHeldItemIndex, leaveStorage, printItems, drawRecipe, drawItemsInContainer, resetItems} from "./item.js";
+import { confirmFront, checkStorage, moveStorageSelection, grabStorageItem, cookTheItems, throwAwayItem, locateHeldItemIndex, leaveStorage, printItems, drawRecipe, drawItemsInContainer, resetItems, moveBookSelection} from "./item.js";
 import { spots, direction, book, cooking_utensil, changed_cooking_utensil, score } from "./idkeys.js";
 import { resetNPCS } from './npc.js';
 
 
 export var p1 = {
     "id": 0,
-    "name": "Bob",
     "px": 50,
     "py": 60,
     "w": 4,
@@ -37,7 +36,6 @@ export var p1 = {
 
 export var p2 = {
     "id": 1,
-    "name": "Bobbers",
     "px": 70,
     "py": 60,
     "speed": 5,
@@ -68,7 +66,6 @@ export var p2 = {
 export function updatePlayers(dt) {
     p1 = movePlayer(dt, p1);
     p2 = movePlayer(dt, p2);
-    // expected two player possible and more
 }
 
 export function drawPlayers() {
@@ -216,7 +213,7 @@ export function movePlayer(dt, p) {
 
             if (btnp_space 
                 && !btnp_c) {
-                let result = checkForItem(p.holding_item, p.held_item, p.carrying_container, p.opened_storage, p.storage_id, p.opened_book, tx , ty);
+                let result = checkForItem(p.holding_item, p.held_item, tx , ty);
                 p.holding_item = result[0];
                 p.held_item = result[1];
                 p.carrying_container = result[2];
@@ -447,17 +444,21 @@ function checkFront(p_dir, px, py) {
 }
 
 
-function checkForItem(holding_item, held_item, carrying_container, opened_storage, storage_id, opened_book, px, py) {
-    let tile = getMapTile(map_item, px, py);
-
+function checkForItem(holding_item, held_item, px, py) {
     let collected_score = 0;
+    let carrying_container = false;
+    let opened_book = false;
+    let storage_id = -1;
+    let opened_storage = false;
 
+    let tile = getMapTile(map_item, px, py);
+    
     if (tile !== -1) {
         let result = confirmFront(tile, held_item, holding_item);
         holding_item = result[0];
         held_item = result[1];
 
-        let check = checkStorage(tile, holding_item); // wrestle for items
+        let check = checkStorage(tile, holding_item);
 
         if (check !== -1) {
             opened_storage = true;
@@ -465,40 +466,23 @@ function checkForItem(holding_item, held_item, carrying_container, opened_storag
         }
 
         if (holding_item) {
-            if (held_item.spr == changed_cooking_utensil.pot_full
-                || held_item.spr == changed_cooking_utensil.fry_tray_full
-                || held_item.spr == changed_cooking_utensil.pot_cooked
-                || held_item.spr == changed_cooking_utensil.pot_burned
-                || held_item.spr == changed_cooking_utensil.fry_tray_burned
-                || held_item.spr == changed_cooking_utensil.fry_tray_cooked
-                || held_item.spr == cooking_utensil.bowl) {
-                carrying_container = true;
-            } 
-            else {
-                carrying_container = false;
-            }
-    
-            if (held_item.spr == book.fryer_book 
-                || held_item.spr == book.stove_book) {
-                opened_book = true;
-            }
-            else {
-                opened_book = false;
-            }
-
             held_item.x = px;
             held_item.y = py - 8;
 
-            if (held_item.spr == score.money) {
+            if (held_item.type == "cookery") {
+                carrying_container = true;
+            }
+    
+            if (held_item.type == "book") {
+                opened_book = true;
+            }
+
+            if (held_item.type == "money") {
                 collected_score += held_item.score;
                 throwAwayItem(locateHeldItemIndex());
                 held_item = -1;
                 holding_item = false;
             }
-        }
-        else if (!holding_item) {
-            opened_book = false;
-            carrying_container = false;
         }
         
         return [holding_item, held_item, carrying_container, opened_storage, storage_id, opened_book, collected_score];
@@ -507,20 +491,6 @@ function checkForItem(holding_item, held_item, carrying_container, opened_storag
     return [holding_item, held_item, carrying_container, opened_storage, storage_id, opened_book, collected_score];
 }
 
-function moveBookSelection(move, selection, max_choice) {
-	const min_choice = 0; // could change to "lock" recipes
-
-	if (move == direction.right) {
-		selection++;
-		if (selection >= max_choice) { selection = max_choice - 1; }
-	}
-	else if (move == direction.left) {
-		selection--;
-		if (selection < min_choice) { selection = min_choice; }
-	}
-    
-	return selection;
-}
 
 // DRAWING
 

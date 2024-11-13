@@ -10,7 +10,6 @@ import { getMapTile, setMapTile, removeMapTile, map_item,
 	map_furniture, map_counter_item, map_floor_item, clearMap
 } from "./map.js";
 import { belts } from "./belt.js";
-import { countProperties } from "./helper.js";
 
 export let items = [];
 
@@ -41,6 +40,7 @@ function takeItemFromMap(on_counter, x, y) {
 	on_counter ? removeMapTile(map_counter_item, x, y) : removeMapTile(map_floor_item, x, y);
 }
 
+
 function clearItemMaps() {
 	clearMap(map_counter_item);
 	clearMap(map_floor_item);
@@ -57,6 +57,7 @@ export function addItemWithScore(item_spr, spot, score) {
 		"x": spot.x,
 		"y": spot.y,
 		"score": score,
+		"type": "",
 	};
 
 	spot.full = true;
@@ -95,18 +96,21 @@ export function addItem(item_spr, spot) {
 		item.full = false;
 		item.burned = false;
 		item.chef = -1;
+		item.type = "cookery";
 
 		cookery.push(item);
 	}
 	else if (item_spr == cooking_utensil.bowl) {
 		item.contents = [];
 		item.full = false;
+		item.type = "cookery";
 	}
 	else if (item_spr == book.fryer_book 
 		|| item_spr == book.stove_book) {
 
 		item.current_selection = 0;
 		item.max_choice = 0;
+		item.type = "book";
 
 		if (item_spr == book.fryer_book) {
 			item.book_pages = fryer_recipes_order;
@@ -124,6 +128,7 @@ export function addItem(item_spr, spot) {
 	}
 	else if (item_spr == score.money) {
 		item.score = 5;
+		item.type = "money";
 	}
 	else {
 		item.cooked = false; // for ingredients and stuff
@@ -332,7 +337,7 @@ function putIngredientIn(held_item, check_item) {
 
 
 	if (check_item.spr == cooking_utensil.pot) {
-		check_item.spr = changed_cooking_utensil.pot_full;
+		check_item.spr = changed_cooking_utensil.pot_full; // hmm
 	}
 	else if (check_item.spr == cooking_utensil.fry_tray) {
 		check_item.spr = changed_cooking_utensil.fry_tray_full;
@@ -664,6 +669,25 @@ export function moveStorageSelection(storage_id, move) {
 	}
 }
 
+export function moveBookSelection(move, selection, max_choice) {
+	const min_choice = 0;
+
+	if (move == direction.right) {
+		selection++;
+		if (selection >= max_choice) { selection = max_choice - 1; }
+	}
+	else if (move == direction.left) {
+		selection--;
+		if (selection < min_choice) { selection = min_choice; }
+	}
+    
+	return selection;
+}
+
+
+
+
+
 export function getItemOnTile(x, y) {
 	for (let i = 0; i < items.length; i++) {
 		if (x == items[i].x && y == items[i].y) {
@@ -873,20 +897,26 @@ export function drawRecipe(held_item) {
     }  
 }
 
+// can split into another function
+
 export function drawItemsInContainer(held_item) {
-    if (typeof held_item.contents == "number"){
-        sprite(48, held_item.x, held_item.y + -8);
-        sprite(held_item.contents, held_item.x, held_item.y + -8);
+	const bg = 48;
+	
+    if (typeof held_item.contents == "number"){ // finished dish
+        sprite(bg, held_item.x, held_item.y - 8);
+        sprite(held_item.contents, held_item.x, held_item.y - 8);
 
         return;
     }
+
+	// Ingredients
 
     let num = held_item.contents.length;
     if (num == 0) {
         return;
     }
 
-    let left_side = Math.floor(num / 2);
+    const left_side = Math.floor(num / 2);
     let offset_x = 0;
     let offset_y = -8;
 
@@ -897,7 +927,7 @@ export function drawItemsInContainer(held_item) {
         let starting_offset = (held_item.x - 4) - (offset_x * (left_side - 1));
 
         for (let i = 0; i < num; i++) {
-            sprite(48, starting_offset + extra_offset, held_item.y + offset_y);
+            sprite(bg, starting_offset + extra_offset, held_item.y + offset_y);
             sprite(held_item.contents[i].spr, starting_offset + extra_offset, held_item.y + offset_y);
 
             starting_offset += offset_x;
