@@ -16,4 +16,4 @@ distrib
 
 # Ignore build for now
 build
-/build/index.js
+build/index.js
