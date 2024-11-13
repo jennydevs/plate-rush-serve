@@ -1,4 +1,4 @@
-import { direction, spots, cooking_utensil, storage_color, storage_type, 
+import { direction, spots, cooking_utensil, storage_type, 
 	cooked_food, book, stove_recipes, fryer_recipes, one_ingredient_recipes, 
 	liquid_fridge_contents, solid_fridge_contents, veggie_fridge_contents,
 	dry_storage_contents, changed_cooking_utensil, score
@@ -105,17 +105,18 @@ export function addItem(item_spr, spot) {
 	else if (item_spr == book.fryer_book 
 		|| item_spr == book.stove_book) {
 
-		item.book_type = -1;
 		item.current_selection = 0;
 		item.max_choice = 0;
 
 		if (item_spr == book.fryer_book) {
-			item.book_type = book.fryer_book;
-			item.max_choice = countProperties(fryer_recipes);
+			item.book_pages = fryer_recipes_order;
+			item.book_recipes = fryer_recipes;
+			item.max_choice = fryer_recipes_order.length;
 		}
 		else if (item_spr == book.stove_book) {
-			item.book_type = book.stove_book;
-			item.max_choice = countProperties(stove_recipes);
+			item.book_pages = stove_recipes_order;
+			item.book_recipes = stove_recipes;
+			item.max_choice = stove_recipes_order.length;
 		}
 	}
 	else if (item_spr == cooking_utensil.infinite_plates){ 
@@ -189,20 +190,20 @@ function addItemTileIds() {
 				else if (tile.sprite == spots.storage) {
 					let storage_tile = getMapTile(map_furniture, j, i); 
 
-					if (storage_tile.sprite == storage_color.white) {
-						tile_spot.storage_type = storage_type.liquid;
+					if (storage_tile.sprite == storage_type.liquid) {
+						tile_spot.storage_contents = liquid_fridge_contents;
 						tile_spot.max_choice = liquid_fridge_contents.length;
 					}
-					else if (storage_tile.sprite == storage_color.green) {
-						tile_spot.storage_type = storage_type.veggie;
+					else if (storage_tile.sprite == storage_type.veggie) {
+						tile_spot.storage_contents = veggie_fridge_contents;
 						tile_spot.max_choice = veggie_fridge_contents.length;
 					}
-					else if (storage_tile.sprite == storage_color.red) {
-						tile_spot.storage_type = storage_type.solid;
+					else if (storage_tile.sprite == storage_type.solid) {
+						tile_spot.storage_contents = solid_fridge_contents;
 						tile_spot.max_choice = solid_fridge_contents.length;
 					}
-					else if (storage_tile.sprite == storage_color.colorful) {
-						tile_spot.storage_type = storage_type.dry;
+					else if (storage_tile.sprite == storage_type.dry) {
+						tile_spot.storage_contents = dry_storage_contents;
 						tile_spot.max_choice = dry_storage_contents.length;
 					}
 
@@ -625,51 +626,41 @@ export function confirmFront(tile, held_item, holding_item) {
 }
 
 export function grabStorageItem(storage_id) {
-	let current_storage = storage[storage_id];
-	let current_type = (current_storage.storage_type == storage_type.liquid ? liquid_fridge_contents 
-		: (current_storage.storage_type == storage_type.solid ? solid_fridge_contents 
-		: (current_storage.storage_type == storage_type.veggie ? veggie_fridge_contents :
-		dry_storage_contents
-	)));
+	const current_storage = storage[storage_id];
+	const current_storage_contents = current_storage.storage_contents;
+	const currently_selected = current_storage.current_selection;
 
-	let current_select = current_storage.current_selection;
-
-	let spr = -1;
-	spr = current_type[current_select];
-
-	addItem(spr, -1);
+	const index = addItem(current_storage_contents[currently_selected], -1);
 
 	current_storage.open = false;
 
-	return [true, items[items.length - 1], false];
+	return [true, items[index], false];
 }
 
+
 export function leaveStorage(storage_id) {
-	let current_storage = storage[storage_id];
+	const current_storage = storage[storage_id];
 	current_storage.open = false;
 }
 
 
 export function moveStorageSelection(storage_id, move) {
-	if (storage[storage_id].open) {
+	const current_storage = storage[storage_id];
+	if (current_storage.open) {
 		let selection = storage[storage_id].current_selection;
 		const min_choice = 0;
-		let max_choice = storage[storage_id].max_choice;
+		const max_choice = storage[storage_id].max_choice;
 
 		if (move == direction.right) {
 			selection++;
-			if (selection >= max_choice) {
-				selection = max_choice - 1;
-			}
+			if (selection >= max_choice) { selection = max_choice - 1; }
 		}
 		else if (move == direction.left) {
 			selection--;
-			if (selection < min_choice) {
-				selection = min_choice;
-			}
+			if (selection < min_choice) { selection = min_choice; }
 		}
 
-		storage[storage_id].current_selection = selection;
+		current_storage.current_selection = selection;
 	}
 }
 
@@ -806,33 +797,30 @@ function checkRecipe(contents, recipe_type) {
 function drawStorageMenu() {
 	for (let i = 0; i < storage.length; i++) {
 		if (storage[i].open) {
-			let current_storage = (storage[i].storage_type == storage_type.liquid ? liquid_fridge_contents 
-				: (storage[i].storage_type == storage_type.solid ? solid_fridge_contents 
-					: (storage[i].storage_type == storage_type.veggie ? veggie_fridge_contents :
-						dry_storage_contents // can increase when neccessary
-			)));
+			const current_storage = storage[i].storage_contents;
+			const bg = 48;
+			const arrow = 131;
 
-			let current_select = storage[i].current_selection;
-			let min_choice = 0;
-			let max_choice = storage[i].max_choice;
+			const currently_selected = storage[i].current_selection;
+			const min_choice = 0;
+			const max_choice = storage[i].max_choice;
 
-			if (current_select !== min_choice) { // left arrow
-				sprite (131, storage[i].x * 8 - 8, storage[i].y * 8 - 8, true);
+			if (currently_selected !== min_choice) { // left
+				sprite(arrow, storage[i].x * 8 - 8, storage[i].y * 8 - 8, true);
+			}
+			if (currently_selected !== max_choice - 1) { // right
+				sprite(arrow, storage[i].x * 8 + 8, storage[i].y * 8 - 8);
 			}
 
-			sprite(48, storage[i].x * 8, storage[i].y * 8 - 8); // background
-			sprite(current_storage[current_select], storage[i].x * 8, storage[i].y * 8 - 8); // food
-
-			if (current_select !== max_choice - 1) {
-				sprite (131, storage[i].x * 8 + 8, storage[i].y * 8 - 8); // right arrow
-			}
+			sprite(bg, storage[i].x * 8, storage[i].y * 8 - 8);
+			sprite(current_storage[currently_selected], storage[i].x * 8, storage[i].y * 8 - 8);
 		}
 	}
 }
 
 export function drawRecipe(held_item) {
-    const book_recipe_pages = (held_item.book_type == book.fryer_book ? fryer_recipes_order : stove_recipes_order);
-	const book_recipes = (held_item.book_type == book.fryer_book ? fryer_recipes : stove_recipes);
+    const book_recipe_pages = held_item.book_pages;
+	const book_recipes = held_item.book_recipes;
 	const min_choice = 0;
     const max_choice = book_recipe_pages.length;
 

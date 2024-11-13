@@ -86,18 +86,12 @@ export const spots = {
 
 };
 
-export const storage_type = {
-	"liquid": 0,
-	"solid": 1,
-    "veggie": 2,
-    "dry": 3
-};
 
-export const storage_color = {
-	"white": 82,
-	"green": 80,
-    "red": 96,
-    "colorful": 133,
+export const storage_type = {
+	"liquid": 82,
+	"solid": 80,
+    "veggie": 96,
+    "dry": 133,
 };
 
 // item states
