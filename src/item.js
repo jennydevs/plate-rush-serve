@@ -52,7 +52,7 @@ export function addItemWithScore(item_spr, spot, score) {
 		"x": spot.x,
 		"y": spot.y,
 		"score": score,
-		"type": "",
+		"type": "money",
 		"subtype": "",
 	};
 
@@ -135,10 +135,6 @@ export function addItem(item_spr, spot) {
 	else if (item_spr == item_key["plate"]) {
 		item.type = "serve"; // ?
 		item.subtype = "plate";
-	}
-	else if (item_spr == item_key["money"]) {
-		item.score = 0;
-		item.type = "money";
 	}
 	else { // remove hmm
 		item.cooked = false; // for ingredients and stuff
