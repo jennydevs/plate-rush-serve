@@ -213,14 +213,19 @@ export function movePlayer(dt, p) {
 
             if (btnp_space 
                 && !btnp_c) {
-                let result = checkForItem(p.holding_item, p.held_item, tx , ty);
-                p.holding_item = result[0];
-                p.held_item = result[1];
-                p.carrying_container = result[2];
-                p.opened_storage = result[3];
-                p.storage_id = result[4];
-                p.opened_book = result[5];
-                p.score += result[6];
+
+                let tile = getMapTile(map_item, tx, ty);
+                
+                if (tile !== -1) {
+                    let result = checkForItem(tile, p.holding_item, p.held_item, tx , ty);
+                    p.holding_item = result[0];
+                    p.held_item = result[1];
+                    p.carrying_container = result[2];
+                    p.opened_storage = result[3];
+                    p.storage_id = result[4];
+                    p.opened_book = result[5];
+                    p.score += result[6];
+                }
             }
 
             if (btnp_c 
@@ -444,50 +449,44 @@ function checkFront(p_dir, px, py) {
 }
 
 
-function checkForItem(holding_item, held_item, px, py) {
+function checkForItem(tile, holding_item, held_item, px, py) {
     let collected_score = 0;
     let carrying_container = false;
     let opened_book = false;
     let storage_id = -1;
     let opened_storage = false;
-
-    let tile = getMapTile(map_item, px, py);
     
-    if (tile !== -1) {
-        let result = confirmFront(tile, held_item, holding_item);
-        holding_item = result[0];
-        held_item = result[1];
+    let result = confirmFront(tile, held_item, holding_item);
+    holding_item = result[0];
+    held_item = result[1];
 
-        let check = checkStorage(tile, holding_item);
+    let check = checkStorage(tile, holding_item);
 
-        if (check !== -1) {
-            opened_storage = true;
-            storage_id = check;
-        }
-
-        if (holding_item) {
-            held_item.x = px;
-            held_item.y = py - 8;
-
-            if (held_item.type == "cookery") {
-                carrying_container = true;
-            }
-    
-            if (held_item.type == "book") {
-                opened_book = true;
-            }
-
-            if (held_item.type == "money") {
-                collected_score += held_item.score;
-                throwAwayItem(locateHeldItemIndex());
-                held_item = -1;
-                holding_item = false;
-            }
-        }
-        
-        return [holding_item, held_item, carrying_container, opened_storage, storage_id, opened_book, collected_score];
+    if (check !== -1) {
+        opened_storage = true;
+        storage_id = check;
     }
 
+    if (holding_item) {
+        held_item.x = px;
+        held_item.y = py - 8;
+
+        if (held_item.type == "cookery") {
+            carrying_container = true;
+        }
+
+        if (held_item.type == "book") {
+            opened_book = true;
+        }
+
+        if (held_item.type == "money") {
+            collected_score += held_item.score;
+            throwAwayItem(locateHeldItemIndex());
+            held_item = -1;
+            holding_item = false;
+        }
+    }
+        
     return [holding_item, held_item, carrying_container, opened_storage, storage_id, opened_book, collected_score];
 }
 
