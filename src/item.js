@@ -1,10 +1,7 @@
-import { direction, spots, cooking_utensil, storage_type, 
-	cooked_food, book, stove_recipes, fryer_recipes, one_ingredient_recipes, 
+import { direction, spots, storage_type, 
+	stove_recipes, fryer_recipes, one_ingredient_recipes, 
 	liquid_fridge_contents, solid_fridge_contents, veggie_fridge_contents,
-	dry_storage_contents, changed_cooking_utensil, score
-
-
-	,item_key,fryer_recipes_order, stove_recipes_order,
+	dry_storage_contents, item_key, fryer_recipes_order, stove_recipes_order,
 } from "./idkeys.js";
 import { getMapTile, setMapTile, removeMapTile, map_item, 
 	map_furniture, map_counter_item, map_floor_item, clearMap
@@ -13,8 +10,6 @@ import { belts } from "./belt.js";
 
 export let items = [];
 
-let currently_updating_belt = false;
-
 export const item_tiles = [];
 const storage = [];
 const cookery = [];
@@ -22,12 +17,12 @@ const cookery = [];
 export function setUpItems() {
     addItemTileIds();
 
-	addItem(cooking_utensil.pot, belts[0]);
-	addItem(cooking_utensil.pot, belts[3]);
-	addItem(cooking_utensil.fry_tray, belts[8]);
-	addItem(book.fryer_book, belts[5]);
-	addItem(book.stove_book, belts[10]);
-	addItem(cooking_utensil.infinite_plates, belts[12]);
+	addItem(item_key["pot"], belts[0]);
+	addItem(item_key["pot"], belts[3]);
+	addItem(item_key["fry_tray"], belts[8]);
+	addItem(item_key["fryer_book"], belts[5]);
+	addItem(item_key["stove_book"], belts[10]);
+	addItem(item_key["infinite_plates"], belts[12]);
 }
 
 
@@ -92,8 +87,8 @@ export function addItem(item_spr, spot) {
 		spot.full = true;
 	}
 	
-	if (item_spr == cooking_utensil.pot 
-		|| item_spr == cooking_utensil.fry_tray) {
+	if (item_spr == item_key["pot"]
+		|| item_spr == item_key["fry_tray"]) {
 		item.contents = [];
 		item.cooked = false;
 		item.full = false;
@@ -101,51 +96,51 @@ export function addItem(item_spr, spot) {
 		item.chef = -1;
 		item.type = "cookery";
 
-		if (item_spr == cooking_utensil.pot) {
+		if (item_spr == item_key["pot"]) {
 			item.subtype = "pot";
 		}
-		else if (item_spr == cooking_utensil.fry_tray) {
+		else if (item_spr == item_key["fry_tray"]) {
 			item.subtype = "fry_tray";
 		}
 
 		cookery.push(item);
 	}
-	else if (item_spr == cooking_utensil.bowl) {
+	else if (item_spr == item_key["bowl"]) {
 		item.contents = [];
 		item.full = false;
 		item.type = "cookery";
 		item.subtype = "container";
 	}
-	else if (item_spr == book.fryer_book 
-		|| item_spr == book.stove_book) {
+	else if (item_spr == item_key["stove_book"]
+		|| item_spr == item_key["fryer_book"]) {
 
 		item.current_selection = 0;
 		item.max_choice = 0;
 		item.type = "book";
 
-		if (item_spr == book.fryer_book) {
+		if (item_spr == item_key["fryer_book"]) {
 			item.book_pages = fryer_recipes_order;
 			item.book_recipes = fryer_recipes;
 			item.max_choice = fryer_recipes_order.length;
 		}
-		else if (item_spr == book.stove_book) {
+		else if (item_spr == item_key["stove_book"]) {
 			item.book_pages = stove_recipes_order;
 			item.book_recipes = stove_recipes;
 			item.max_choice = stove_recipes_order.length;
 		}
 	}
-	else if (item_spr == cooking_utensil.infinite_plates){ 
+	else if (item_spr == item_key["infinite_plates"]){ 
 
 	}
-	else if (item_spr == cooking_utensil.plate) {
+	else if (item_spr == item_key["plate"]) {
 		item.type = "serve"; // ?
 		item.subtype = "plate";
 	}
-	else if (item_spr == score.money) {
-		item.score = 5;
+	else if (item_spr == item_key["money"]) {
+		item.score = 0;
 		item.type = "money";
 	}
-	else {
+	else { // remove hmm
 		item.cooked = false; // for ingredients and stuff
 	}
 
@@ -274,7 +269,7 @@ function plateFood(holding_item, held_item, check_item) {
 			check_item.burned = false;
 			check_item.chef = -1;
 			check_item.contents = [];
-			check_item.spr = cooking_utensil[check_item.subtype];
+			check_item.spr = item_key[check_item.subtype];
 
 			setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
 		}
@@ -282,7 +277,7 @@ function plateFood(holding_item, held_item, check_item) {
 	else if (check_item.subtype == "plate") {
 		for (const [key, ingredient] of Object.entries(one_ingredient_recipes)) {
 			if (ingredient == held_item.spr) {
-				check_item.spr = cooked_food[key];
+				check_item.spr = item_key[key];
 				setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
 				throwAwayItem(locateHeldItemIndex());
 				return [false, -1, check_item];
@@ -313,28 +308,21 @@ function pourIngredientsIn(held_item, check_item) {
 }
 
 function putIngredientIn(holding_item, held_item, check_item) {
-	// if (check_item == -1) {
-	// 	return [held_item, check_item];
-	// }
+	if (check_item == -1 || (check_item.cooked || check_item.burned)) {
+		return [holding_item, held_item, check_item];
+	}
 
 	if (!check_item.full) {
-		if (check_item.subtype == "pot") {
-			check_item.spr = changed_cooking_utensil.pot_full;
-		}
-		else if (check_item.subtype == "fry_tray") {
-			check_item.spr = changed_cooking_utensil.fry_tray_full;
-		}
+		check_item.spr = item_key[check_item.subtype + "_full"];
 	}
 
 	setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
 
-	if (!check_item.cooked || !check_item.burned) {
-		check_item.contents.push(held_item);
-		check_item.full = true;
-		throwAwayItem(locateHeldItemIndex()); // simplify this
-		held_item = -1;
-		holding_item = false;
-	}
+	check_item.contents.push(held_item);
+	check_item.full = true;
+	throwAwayItem(locateHeldItemIndex()); // simplify this
+	held_item = -1;
+	holding_item = false;
 
 	return [holding_item, held_item, check_item];
 }
@@ -349,8 +337,8 @@ function pickUpItem(held_item, check_item, spot) {
 		return [held_item, check_item, spot];
 	}
 
-	if (check_item.spr == cooking_utensil.infinite_plates) { // hmm
-		let index = addItem(cooking_utensil.plate, -1);
+	if (check_item.spr == item_key["infinite_plates"]) { // hmm
+		let index = addItem(item_key["plate"], -1);
 		return [items[index], check_item, spot];
 	}
 
@@ -392,10 +380,6 @@ function trashCanSpot(holding_item, held_item) {
 		return [holding_item, held_item];
 	}
 
-	// if (held_item.spr == cooking_utensil.plate) {
-	// 	return [holding_item, held_item];
-	// }
-
 	if (held_item.type == "cookery") {
 		if (held_item.subtype == "container") {
 			held_item.contents = [];
@@ -404,13 +388,8 @@ function trashCanSpot(holding_item, held_item) {
 			return [holding_item, held_item];
 		}
 
-		if (held_item.subtype == "pot") {
-			held_item.spr = cooking_utensil.pot;
-		}
-		else if (held_item.subtype == "fry_tray") {
-			held_item.spr = cooking_utensil.fry_tray;
-		}
 
+		held_item.spr = item_key[held_item.subtype];
 		held_item.contents = [];
 		held_item.full = false;
 		held_item.cooked = false;
@@ -421,7 +400,7 @@ function trashCanSpot(holding_item, held_item) {
 	}
 
 	if (held_item.subtype == "food") {
-		held_item.spr = cooking_utensil.plate;
+		held_item.spr = item_key["plate"];
 		held_item.type = "serve";
 		held_item.subtype = "plate";
 
@@ -430,9 +409,9 @@ function trashCanSpot(holding_item, held_item) {
 
 	throwAwayItem(locateHeldItemIndex()); // update hmm
 
-	held_item = -1;
 	holding_item = false;
-
+	held_item = -1;
+	
 	return [holding_item, held_item];
 }
 
@@ -496,7 +475,7 @@ function interactSpot(tile_spots, tile_id, holding_item, held_item) {
 				return [holding_item, held_item];
 			}
 
-			if (check_item.spr == cooking_utensil.plate) {
+			if (check_item.subtype == "plate") {
 				let result = plateFood(holding_item, held_item, check_item);
 				holding_item = result[0];
 				held_item = result[1];
@@ -506,20 +485,6 @@ function interactSpot(tile_spots, tile_id, holding_item, held_item) {
 					holding_item = false;
 				}
 
-				return [holding_item, held_item];
-			}
-
-			if (check_item.spr == cooking_utensil.bowl) {
-				for (const [key, dish] of Object.entries(cooked_food)) {
-					if (dish == held_item.spr) {
-						return [holding_item, held_item];
-					}
-				}
-
-				let result = putIngredientIn(held_item, check_item);
-				held_item = result[0];
-				check_item = result[1];
-				holding_item = false;
 				return [holding_item, held_item];
 			}
 		}
@@ -685,13 +650,13 @@ export function cookTheItems(p_id, tile_id) {
 
 function addFoodToContainer(p_id, recipe, container) {
 	if (recipe == -1) {
-		container.contents = cooked_food["not_food"];
+		container.contents = item_key["not_food"];
 		container.burned = true;
-		container.spr = changed_cooking_utensil[container.subtype + "_burned"];
+		container.spr = item_key[container.subtype + "_burned"];
 	}
 	else {
-		container.contents = cooked_food[recipe];
-		container.spr = changed_cooking_utensil[container.subtype + "_cooked"];
+		container.contents = item_key[recipe];
+		container.spr = item_key[container.subtype + "_cooked"];
 	}
 	
 	container.chef = p_id;
@@ -897,10 +862,10 @@ export function resetItems() {
 		item_tiles[i].full = false;
 	}
 
-	addItem(cooking_utensil.pot, belts[0]);
-	addItem(cooking_utensil.pot, belts[3]);
-	addItem(cooking_utensil.fry_tray, belts[8]);
-	addItem(book.fryer_book, belts[5]);
-	addItem(book.stove_book, belts[10]);
-	addItem(cooking_utensil.infinite_plates, belts[12]);
+	addItem(item_key["pot"], belts[0]);
+	addItem(item_key["pot"], belts[3]);
+	addItem(item_key["fry_tray"], belts[8]);
+	addItem(item_key["fryer_book"], belts[5]);
+	addItem(item_key["stove_book"], belts[10]);
+	addItem(item_key["infinite_plates"], belts[12]);
 }
