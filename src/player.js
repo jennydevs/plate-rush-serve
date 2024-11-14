@@ -472,14 +472,14 @@ function checkForItem(tile, holding_item, held_item, px, py) {
         held_item.y = py - 8;
 
         if (held_item.type == "cookery") {
-            carrying_container = true;
+            if (held_item.subtype == "pot" || held_item.subtype == "fry_tray") {
+                carrying_container = true;
+            }
         }
-
-        if (held_item.type == "book") {
+        else if (held_item.type == "book") {
             opened_book = true;
         }
-
-        if (held_item.type == "money") {
+        else if (held_item.type == "money") {
             collected_score += held_item.score;
             throwAwayItem(locateHeldItemIndex());
             held_item = -1;
