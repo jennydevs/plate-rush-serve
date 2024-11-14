@@ -1,6 +1,6 @@
 import { getTile, getMapTile, map_solid, map_item, map_furniture } from "./map.js";
 import { confirmFront, checkStorage, moveStorageSelection, grabStorageItem, cookTheItems, throwAwayItem, locateHeldItemIndex, leaveStorage, printItems, drawRecipe, drawItemsInContainer, resetItems, moveBookSelection} from "./item.js";
-import { spots, direction, book, cooking_utensil, changed_cooking_utensil, score } from "./idkeys.js";
+import { spots, direction} from "./idkeys.js";
 import { resetNPCS } from './npc.js';
 
 

@@ -1,16 +1,15 @@
 export const item_key = {
     "bowl_full": 84,
+    "fry_tray": 114,
     "fry_tray_burned": 116,
     "fry_tray_cooked": 117,
 	"fry_tray_full": 115,
+    "pot": 119,
     "pot_cooked": 121,
     "pot_burned": 105,
     "pot_full": 120,
     "bowl": 83,
-    "fry_tray": 114,
-    "pan": 119,
     "plate": 91,
-    "pot": 85,
     "drink_book": 112,
     "fryer_book": 113,
     "stove_book": 129,
@@ -60,6 +59,8 @@ export const item_key = {
     "spring_onion": 190,
     "tomato": 188,
 	"water": 163,
+    "money": 154,
+    "infinite_plates": 75,
 };
 
 export const direction = {
@@ -89,71 +90,10 @@ export const spots = {
 
 export const storage_type = {
 	"liquid": 82,
-	"solid": 80,
-    "veggie": 96,
+	"solid": 96,
+    "veggie": 80,
     "dry": 133,
 };
-
-// item states
-export const changed_cooking_utensil = {
-    "bowl_full": 84,
-    "fry_tray_burned": 116,
-    "fry_tray_cooked": 117,
-	"fry_tray_full": 115,
-    "pot_cooked": 121,
-    "pot_burned": 105,
-    "pot_full": 120,
-    "plate_dirty": 238,
-};
-
-// items
-export const cooking_utensil = {
-    "bowl": 83,
-    "fry_tray": 114,
-    "plate": 91,
-    "pot": 119,
-    "infinite_plates": 75,
-};
-
-export const book = {
-	"drink_book": 112,
-    "fryer_book": 113,
-    "stove_book": 129,
-};
-
-export const cooked_food = {
-    "apple_plate": 227,
-    "cake_slice": 230,
-    "candy_plate": 232,
-    "cherry_plate": 228,
-    "cupcake": 231,
-    "egg_rice": 224,
-	"flan": 233,
-    "fried_egg": 237,
-    "fried_shrimp": 225,
-    "kebab": 234,
-    "not_food": 236,
-	"pizza": 235,
-    "soup": 229,
-	"sushi": 226,
-};
-
-// export const cooked_food = {
-//     227: "apple_plate",
-//     230: "cake_slice",
-//     232: "candy_plate",
-//     228: "cherry_plate",
-//     231: "cupcake",
-//     224: "egg_rice",
-// 	233: "flan",
-//     237: "fried_egg",
-//     225: "fried_shrimp",
-//     234: "kebab",
-//     236: "not_food",
-// 	235: "pizza",
-//     229: "soup",
-// 	226: "sushi",
-// };
 
 export const fryer_recipes_order = [
     "fried_shrimp",
