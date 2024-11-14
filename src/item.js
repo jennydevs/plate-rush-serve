@@ -253,6 +253,14 @@ function checkCanPlace(spot_type, item_type) {
 	return false;
 }
 
+function checkCanPickUp(check_item, spot) {
+	if (check_item != -1 && spot != -1) {
+		return true;
+	}
+
+	return false;
+}
+
 
 function plateFood(holding_item, held_item, check_item) {
 	if (check_item.subtype == "pot" || check_item.subtype == "fry_tray") {
@@ -324,27 +332,18 @@ function putIngredientIn(holding_item, held_item, check_item) {
 }
 
 
-function pickUpItem(holding_item, held_item, check_item, spot) {
-	if (check_item == -1 || spot == -1) {
-		return [held_item, check_item, spot];
-	}
-
+function pickUpItem(check_item, spot) {
 	if (check_item.spr == item_key["infinite_plates"]) { // hmm
-		return [true, items[addItem(item_key["plate"], -1)], check_item, spot];
+		return [items[addItem(item_key["plate"], -1)], true];
 	}
 
-	held_item = check_item;
-	holding_item = true;
-	
-	held_item.tile_type = -1; // here too
-	held_item.current_tile = -1;
-	held_item.on_counter = false;
+	check_item.current_tile = -1;
+	check_item.tile_type = -1;
+	check_item.on_counter = false;
 
 	takeItemFromMap(spot.is_counter, spot.x, spot.y);
 
-	spot.full = false;
-
-	return [holding_item, held_item, check_item, spot];
+	return [check_item, false];
 }
 
 
@@ -479,16 +478,14 @@ function interactSpot(tile_spots, tile_id, holding_item, held_item) {
 	if (!holding_item) {
 		if (spot.full) {
 			let check_item = collectItem(spot.id, spot.tile_type);
-			
-			if (check_item == -1) { // when the spot was not set to full this was the issue check_item
-				return [holding_item, held_item];
-			}
 
-			let result = pickUpItem(holding_item, held_item, check_item, spot);
-			holding_item = result[0];
-			held_item = result[1];
-			check_item = result[2];
-			spot = result[3];
+			if (checkCanPickUp(check_item, spot)) {
+				let result = pickUpItem(check_item, spot);
+				held_item = result[0];
+				spot.full = result[1];
+
+				return [true, held_item];
+			}
 
 			return [holding_item, held_item];
 		}
