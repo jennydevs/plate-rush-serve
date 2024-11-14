@@ -65,6 +65,7 @@ function fillBelts(belt, belt_count) {
             "y": b.y,
             "tile_type": spots.belt,
             "is_counter": true,
+            "type": "place",
         };
         
         let belt_info = findNextBelt(curr_belt.dir, curr_belt.x, curr_belt.y);

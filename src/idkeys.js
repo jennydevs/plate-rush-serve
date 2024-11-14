@@ -186,9 +186,9 @@ export const fryer_recipes = {
 };
 
 export const one_ingredient_recipes = {
-    "cherry_plate": [item_key.cherry],
-    "apple_plate": [item_key.apple],
-    "candy_plate": [item_key.candy],
+    "cherry_plate": item_key.cherry,
+    "apple_plate": item_key.apple,
+    "candy_plate": item_key.candy,
 };
 
 
