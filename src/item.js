@@ -324,33 +324,27 @@ function putIngredientIn(holding_item, held_item, check_item) {
 }
 
 
-function pickUpItem(held_item, check_item, spot) {
-	if (check_item == -1) {
-		return [held_item, check_item, spot];
-	}
-
-	if (spot == -1) {
+function pickUpItem(holding_item, held_item, check_item, spot) {
+	if (check_item == -1 || spot == -1) {
 		return [held_item, check_item, spot];
 	}
 
 	if (check_item.spr == item_key["infinite_plates"]) { // hmm
-		let index = addItem(item_key["plate"], -1);
-		return [items[index], check_item, spot];
+		return [true, items[addItem(item_key["plate"], -1)], check_item, spot];
 	}
 
-	spot.full = false;
 	held_item = check_item;
-
-	check_item = -1; // new needed or not
-
+	holding_item = true;
+	
 	held_item.tile_type = -1; // here too
 	held_item.current_tile = -1;
-	
 	held_item.on_counter = false;
 
-	takeItemFromMap(spot.is_counter, held_item.x, held_item.y);
+	takeItemFromMap(spot.is_counter, spot.x, spot.y);
 
-	return [held_item, check_item, spot];
+	spot.full = false;
+
+	return [holding_item, held_item, check_item, spot];
 }
 
 
@@ -477,10 +471,6 @@ function interactSpot(tile_spots, tile_id, holding_item, held_item) {
 				held_item = result[1];
 				check_item = result[2];
 
-				if (held_item == -1) { 
-					holding_item = false;
-				}
-
 				return [holding_item, held_item];
 			}
 		}
@@ -488,18 +478,18 @@ function interactSpot(tile_spots, tile_id, holding_item, held_item) {
 
 	if (!holding_item) {
 		if (spot.full) {
-
 			let check_item = collectItem(spot.id, spot.tile_type);
 			
 			if (check_item == -1) { // when the spot was not set to full this was the issue check_item
 				return [holding_item, held_item];
 			}
 
-			let result = pickUpItem(held_item, check_item, spot);
-			held_item = result[0];
-			check_item = result[1];
-			spot = result[2];
-			holding_item = true;
+			let result = pickUpItem(holding_item, held_item, check_item, spot);
+			holding_item = result[0];
+			held_item = result[1];
+			check_item = result[2];
+			spot = result[3];
+
 			return [holding_item, held_item];
 		}
 	}
