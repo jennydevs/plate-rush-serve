@@ -1,9 +1,11 @@
-import { direction, spots, storage_type, 
+import { 
+	direction, spots, storage_type, item_key,
 	stove_recipes, fryer_recipes, one_ingredient_recipes, 
-	liquid_fridge_contents, solid_fridge_contents, veggie_fridge_contents,
-	dry_storage_contents, item_key, fryer_recipes_order, stove_recipes_order,
+	liquid_fridge_contents, solid_fridge_contents, veggie_fridge_contents, dry_storage_contents, 
+	fryer_recipes_order, stove_recipes_order,
 } from "./idkeys.js";
-import { getMapTile, setMapTile, removeMapTile, map_item, 
+import { 
+	getMapTile, setMapTile, removeMapTile, map_item, 
 	map_furniture, map_counter_item, map_floor_item, clearMap
 } from "./map.js";
 import { belts } from "./belt.js";
@@ -783,7 +785,7 @@ export function drawItemsInContainer(held_item) {
     if (typeof held_item.contents == "number"){ // finished dish
         sprite(bg, held_item.x, held_item.y - 8);
         sprite(held_item.contents, held_item.x, held_item.y - 8);
-		
+
         return;
     }
 

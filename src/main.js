@@ -3,7 +3,9 @@ import { setColors, drawMap } from "./map.js";
 import { setUpItems, drawBottomItems, drawTopItems, drawMenus} from "./item.js";
 import { setUpBelts, beltMoveItems } from "./belt.js";
 import { setUpNPC, drawNPC, drawNPCOrders, updateNPC, addNPC } from "./npc.js";
-import { updatePlayers, drawPlayers, drawHand, drawPlayerOnBelt, drawPlayerOnTop, drawPlayerFront, drawScore, gameTimer, resetGame } from "./player.js";
+import { 
+    updatePlayers, drawPlayers, drawHand, drawPlayersOnTop, drawPlayerFront, drawScore, gameTimer, resetGame 
+} from "./player.js";
 import { drawStart, drawEnd, drawPause, updateStart } from "./menu.js";
 
 let game_loop = false;
@@ -22,9 +24,7 @@ exports.update = function () {
             game_pause = !game_pause;
         }
 
-        
         if (!game_pause) {
-
             if (!game_end) {
                 let dt = delta();
                 updatePlayers(dt);
@@ -40,8 +40,7 @@ exports.update = function () {
             drawNPC();
             drawPlayers();
             drawTopItems();
-            drawPlayerOnBelt();
-            drawPlayerOnTop();
+            drawPlayersOnTop();
             drawNPCOrders();
             drawHand();
             drawMenus();

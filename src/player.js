@@ -80,22 +80,14 @@ export function drawPlayers() {
     }
 }
 
-export function drawPlayerOnBelt() {
-    if (p2.on_belt) {
+export function drawPlayersOnTop() {
+    drawPlayerItem(p2);
+    if (p2.on_belt || p2.on_counter) {
         drawPlayer(p2);
     }
 
-    if (p1.on_belt) {
-        drawPlayer(p1);
-    }
-}
-
-export function drawPlayerOnTop() {
-    if (p2.on_counter) {
-        drawPlayer(p2);
-    }
-
-    if (p1.on_counter) {
+    drawPlayerItem(p1);
+    if (p1.on_belt || p1.on_counter) {
         drawPlayer(p1);
     }
 }
@@ -420,23 +412,23 @@ function constrainBoundaries(cx, cy) {
 }
 
 function checkFront(p_dir, px, py) {
-    const leftSide = -2;
-    const rightSide = 11;
-    const topSide = -2;
-    const bottomSide = 11;
-    const verticalOffset = 2;
-    const horizontalOffset = 2;
+    const left_side = -2;
+    const right_side = 11;
+    const top_side = -2;
+    const bottom_side = 11;
+    const vertical_offset = 2;
+    const horizontal_offset = 2;
     
     let front_coords = -1;
     
     if (p_dir == direction.right) {
-        front_coords = [px + rightSide, py + horizontalOffset];
+        front_coords = [px + right_side, py + horizontal_offset];
     } else if (p_dir == direction.left) {
-        front_coords = [px + leftSide, py + horizontalOffset];
+        front_coords = [px + left_side, py + horizontal_offset];
     } else if (p_dir == direction.up) {
-        front_coords = [px + verticalOffset, py + topSide];
+        front_coords = [px + vertical_offset, py + top_side];
     } else if (p_dir == direction.down) {
-        front_coords = [px+ verticalOffset , py + bottomSide];
+        front_coords = [px+ vertical_offset , py + bottom_side];
     }
     
     if (front_coords !== -1) {
@@ -555,7 +547,6 @@ function drawTimer(minutes, seconds) {
 export function resetGame() {
     let reset_p1 = {
         "id": 0,
-        "name": "Bob",
         "px": 50,
         "py": 60,
         "w": 4,
@@ -595,7 +586,6 @@ export function resetGame() {
 
     let reset_p2 = {
         "id": 1,
-        "name": "Bobbers",
         "px": 70,
         "py": 60,
         "speed": 5,
