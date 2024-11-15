@@ -122,11 +122,13 @@ export function addItem(item_spr, spot) {
 			item.book_pages = fryer_recipes_order;
 			item.book_recipes = fryer_recipes;
 			item.max_choice = fryer_recipes_order.length;
+			item.subtype = "fryer";
 		}
 		else if (item_spr == item_key["stove_book"]) {
 			item.book_pages = stove_recipes_order;
 			item.book_recipes = stove_recipes;
 			item.max_choice = stove_recipes_order.length;
+			item.subtype = "stove";
 		}
 	}
 	else if (item_spr == item_key["infinite_plates"]){ 
@@ -354,6 +356,7 @@ export function throwAwayItem(index) { // figure this out
 	}
 
 	if (items[index].current_tile == -1 && items[index].tile_type == -1) {
+		console.log("Thrown away: ",index)
 		items.splice(index, 1);
 	} else {
 		let tile = getMapTile(map_item, items[index].x, items[index].y);
@@ -725,11 +728,7 @@ export function drawRecipe(held_item) {
     const recipe = book_recipe_pages[currently_selected];
 	const recipe_contents = book_recipes[recipe];
     const recipe_image = item_key[recipe];
-    const recipe_length = recipe_contents.length;
 
-    const left_side = Math.floor(recipe_length / 2);
-    let offset_x = 0;
-    const offset_y = -8;
     const image_offset_y = -16;
 	const bg = 48;
 	const arrow = 131;
@@ -746,31 +745,37 @@ export function drawRecipe(held_item) {
     sprite(bg, held_item.x, held_item.y + image_offset_y);
     sprite(recipe_image, held_item.x, held_item.y + image_offset_y);
 
-	// Recipe contents
-
-    if (recipe_length % 2 == 0) { // Even ingredients
-        offset_x = 9;
-        let starting_offset = (held_item.x - 4) - (offset_x * (left_side - 1));
-
-        for (let i = 0; i < recipe_length; i++) {
-            sprite(bg, starting_offset, held_item.y + offset_y);
-            sprite(recipe_contents[i], starting_offset, held_item.y + offset_y);
-            starting_offset += offset_x;
-        }
-    }
-    else { // Odd ingredients
-        offset_x = 9;
-        let starting_offset = held_item.x - (offset_x * left_side);
-
-        for (let i = 0; i < recipe_length; i++) {
-            sprite(bg, starting_offset, held_item.y + offset_y);
-            sprite(recipe_contents[i], starting_offset, held_item.y + offset_y);
-            starting_offset += offset_x;
-        }
-    }  
+    displayContents(recipe_contents, bg, held_item.x, held_item.y, "book");
 }
 
-// can split into another function
+function displayContents(contents, bg, hx, hy, type) { // could just draw on a map and offset 
+    const offset_y = -8;
+
+	let offset_x = 9;
+	let left_side = Math.floor(contents.length / 2);
+
+	if (contents.length % 2 == 0) {
+		left_side -= 1;
+		hx -= 4;
+	}
+
+	let starting_offset = hx - (offset_x * left_side);
+
+	if (type == "book") {
+		for (let i = 0; i < contents.length; i++) {
+			sprite(bg, starting_offset, hy + offset_y);
+			sprite(contents[i], starting_offset, hy + offset_y);
+			starting_offset += offset_x;
+		}
+	}
+	else if (type == "cookery") {
+		for (let i = 0; i < contents.length; i++) {
+			sprite(bg, starting_offset, hy + offset_y);
+			sprite(contents[i].spr, starting_offset, hy + offset_y);
+			starting_offset += offset_x;
+		}
+	}
+}
 
 export function drawItemsInContainer(held_item) {
 	const bg = 48;
@@ -778,45 +783,15 @@ export function drawItemsInContainer(held_item) {
     if (typeof held_item.contents == "number"){ // finished dish
         sprite(bg, held_item.x, held_item.y - 8);
         sprite(held_item.contents, held_item.x, held_item.y - 8);
-
+		
         return;
     }
 
-	// Ingredients
-
-    let num = held_item.contents.length;
-    if (num == 0) {
+    if (held_item.contents.length == 0) {
         return;
     }
 
-    const left_side = Math.floor(num / 2);
-    let offset_x = 0;
-    let offset_y = -8;
-
-    if (num % 2 == 0) {
-        offset_x = 9;
-        let extra_offset = 0;
-
-        let starting_offset = (held_item.x - 4) - (offset_x * (left_side - 1));
-
-        for (let i = 0; i < num; i++) {
-            sprite(bg, starting_offset + extra_offset, held_item.y + offset_y);
-            sprite(held_item.contents[i].spr, starting_offset + extra_offset, held_item.y + offset_y);
-
-            starting_offset += offset_x;
-        }
-    }
-    else {
-        offset_x = 9;
-
-        let starting_offset = held_item.x - (offset_x * left_side);
-
-        for (let i = 0; i < num; i++) {
-            sprite(48, starting_offset, held_item.y + offset_y);
-            sprite(held_item.contents[i].spr, starting_offset, held_item.y + offset_y);
-            starting_offset += offset_x;
-        }
-    }
+	displayContents(held_item.contents, bg, held_item.x, held_item.y, "cookery");
 }
 
 export function drawMenus() {
