@@ -1,6 +1,6 @@
 import { npc_spots, npc_list, direction, drink_orders, food_orders, score, item_scores } from "./idkeys.js";
 import { getMapTile, map_item, map_npc, map_furniture } from "./map.js";
-import { addItem, throwAwayItem, item_tiles, items, getItemOnTile, addItemWithScore } from "./item.js";
+import { addItem, throwAwayItem, item_tiles, items, getItemKey, addItemWithScore } from "./item.js";
 import { belts } from "./belt.js";
 
 let npcs = [];
@@ -963,7 +963,7 @@ export function npcCheck(belt_items) {
                         npcs[i].sitting = false;
 
                         throwAwayItem(b_t[j][1]); // put remove item in it
-                        let table_item = getItemOnTile(tile.x, tile.y);
+                        let table_item = getItemKey(tile.x, tile.y);
                         if (table_item !== -1) { // throw away anything sitting on the table if served
                             throwAwayItem(table_item);
                         }

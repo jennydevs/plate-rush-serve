@@ -209,7 +209,7 @@ export function movePlayer(dt, p) {
                 let tile = getMapTile(map_item, tx, ty);
                 
                 if (tile !== -1) {
-                    let result = checkForItem(tile, p.holding_item, p.held_item, tx , ty);
+                    let result = checkForItem(tile, p.holding_item, p.held_item, tx , ty, p.id);
                     p.holding_item = result[0];
                     p.held_item = result[1];
                     p.carrying_container = result[2];
@@ -331,8 +331,7 @@ export function movePlayer(dt, p) {
             moveStorageSelection(p.storage_id, direction.left);
         }
         if (btnp_space
-            && !btnp_left && !btnp_right
-        ) {
+            && !btnp_left && !btnp_right) {
             const result = grabStorageItem(p.storage_id);
             p.holding_item = result[0];
             p.held_item = result[1];
@@ -440,15 +439,19 @@ function checkFront(p_dir, px, py) {
     return front_coords;
 }
 
+export function removeHeldItem() {
+    return {"holding_item": false, "held_item": -1};
+}
 
-function checkForItem(tile, holding_item, held_item, px, py) {
+
+function checkForItem(tile, holding_item, held_item, px, py, p_id) {
     let collected_score = 0;
     let carrying_container = false;
     let opened_book = false;
     let storage_id = -1;
     let opened_storage = false;
     
-    let result = confirmFront(tile, held_item, holding_item);
+    let result = confirmFront(p_id, tile, held_item, holding_item);
     holding_item = result[0];
     held_item = result[1];
 
@@ -464,7 +467,8 @@ function checkForItem(tile, holding_item, held_item, px, py) {
         held_item.y = py - 8;
 
         if (held_item.type == "cookery") {
-            if (held_item.subtype == "pot" || held_item.subtype == "fry_tray") {
+            if (held_item.subtype == "pot" 
+                || held_item.subtype == "fry_tray") {
                 carrying_container = true;
             }
         }
@@ -473,13 +477,15 @@ function checkForItem(tile, holding_item, held_item, px, py) {
         }
         else if (held_item.type == "money") {
             collected_score += held_item.score;
-            throwAwayItem(locateHeldItemIndex());
-            held_item = -1;
-            holding_item = false;
+
+            let result = removeHeldItem();
+            holding_item = result.holding_item;
+            held_item = result.held_item;
         }
     }
         
-    return [holding_item, held_item, carrying_container, opened_storage, storage_id, opened_book, collected_score];
+    return [holding_item, held_item, carrying_container, 
+        opened_storage, storage_id, opened_book, collected_score];
 }
 
 
