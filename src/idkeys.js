@@ -63,6 +63,14 @@ export const item_key = {
     "infinite_plates": 75,
 };
 
+export const key_name = {};
+
+export function setUpKeyNames() {
+    for (const [key, item] of Object.entries(item_key)) {
+        key_name[item] = key;
+    }
+}
+
 export const direction = {
     "right": 0,
     "left": 1,
