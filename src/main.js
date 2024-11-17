@@ -4,9 +4,11 @@ import { setUpItems, drawBottomItems, drawTopItems, drawMenus} from "./item.js";
 import { setUpBelts, beltMoveItems } from "./belt.js";
 import { setUpNPC, drawNPC, drawNPCOrders, updateNPC, addNPC } from "./npc.js";
 import { 
-    updatePlayers, drawPlayers, drawHand, drawPlayersOnTop, drawPlayerFront, drawScore, gameTimer, resetGame 
+    setUpPlaters, updatePlayers, drawPlayers, 
+    drawHand, drawPlayersOnTop, drawPlayerFront, drawScore
 } from "./player.js";
 import { drawStart, drawEnd, drawPause, updateStart } from "./menu.js";
+import { resetGame, gameTimer } from "./level.js";
 
 let game_loop = false;
 let game_start = true;
@@ -16,6 +18,7 @@ let game_pause = false;
 setColors();
 setUpBelts();
 setUpItems();
+setUpPlaters();
 setUpNPC();
 
 exports.update = function () {
@@ -31,8 +34,8 @@ exports.update = function () {
             }
 
             beltMoveItems();
-            addNPC();
-            updateNPC();
+            // addNPC();
+            // updateNPC();
 
             drawMap();
             drawBottomItems();
