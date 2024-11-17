@@ -2,85 +2,58 @@ import {
 	direction, spots, storage_type, item_key,
 	stove_recipes, fryer_recipes, one_ingredient_recipes, 
 	liquid_fridge_contents, solid_fridge_contents, veggie_fridge_contents, dry_storage_contents, 
-	fryer_recipes_order, stove_recipes_order,
+	fryer_recipes_order, stove_recipes_order, setUpKeyNames, key_name,
 } from "./idkeys.js";
 import { 
 	getMapTile, setMapTile, removeMapTile, map_item, 
 	map_furniture, map_counter_item, map_floor_item, clearMap
 } from "./map.js";
-import { belts } from "./belt.js";
-import { removeHeldItem } from "./player.js";
 
-export let items = {};
+export var items = {};
 
-export const item_tiles = [];
-const storage = [];
-const cookery = [];
+export const item_tiles = {};
+const storages = {};
 
 export function setUpItems() {
+	setUpKeyNames();
     addItemTileIds();
 
-	addItem(item_key["pot"], belts[0]);
-	addItem(item_key["pot"], belts[3]);
-	addItem(item_key["fry_tray"], belts[8]);
-	addItem(item_key["fryer_book"], belts[5]);
-	addItem(item_key["stove_book"], belts[10]);
-	addItem(item_key["infinite_plates"], belts[12]);
+	spawnItems();
 }
 
+function spawnItems() {
+	addItem(item_key["pot"], item_tiles[getItemKey(5,3)], -1);
+	addItem(item_key["pot"], item_tiles[getItemKey(7, 3)], -1);
+	addItem(item_key["fry_tray"], item_tiles[getItemKey(8,3)], -1);
+	addItem(item_key["fryer_book"], item_tiles[getItemKey(9,3)], -1);
+	addItem(item_key["stove_book"], item_tiles[getItemKey(10, 3)], -1);
+	addItem(item_key["infinite_plates"], item_tiles[getItemKey(11, 3)], -1);
+}
 
-function setItemToMap(on_counter, spr, x, y) {
+export function setItemToMap(on_counter, spr, x, y) {
 	on_counter ? setMapTile(map_counter_item, spr, x, y) : setMapTile(map_floor_item, spr, x, y);
 }
 
-
-function removeItemFromMap(on_counter, x, y) {
+export function removeItemFromMap(on_counter, x, y) {
 	on_counter ? removeMapTile(map_counter_item, x, y) : removeMapTile(map_floor_item, x, y);
 }
-
 
 function clearItemMaps() {
 	clearMap(map_counter_item);
 	clearMap(map_floor_item);
 }
 
-export function addItemWithScore(item_spr, spot, score) {
+export function addItem(item_spr, spot, score) {
 	if (spot == undefined) {
 		return;
 	}
 
-	let bottom_tile = checkBottomTile(spot);
-	
 	let item = {
+		"name": key_name[item_spr],
 		"spr": item_spr,
-		"current_tile": bottom_tile[0],
-		"tile_type": bottom_tile[1],
-		"on_counter": bottom_tile[2],
-		"x": spot.x,
-		"y": spot.y,
-		"score": score,
-		"type": "money",
-		"subtype": "",
-	};
-
-	spot.full = true; // hmm
-
-	items[getItemKey(item.x, item.y)] = item;
-	setItemToMap(item.on_counter, item.spr, item.x, item.y);
-}
-
-export function addItem(item_spr, spot) {
-	if (spot == undefined) {
-		return;
-	}
-
-	let bottom_tile = checkBottomTile(spot);
-
-	let item = {
-		"spr": item_spr,
-		"current_tile": bottom_tile[0],
-		"tile_type": bottom_tile[1],
-		"on_counter": bottom_tile[2],
+		"current_tile": -1,
+		"tile_type": -1,
+		"on_counter": false,
 		"x": -8,
 		"y": -8,
 		"type": "",
@@ -88,12 +61,21 @@ export function addItem(item_spr, spot) {
 	};
 
 	if (spot !== -1) {
+		item.current_tile = getItemKey(spot.x, spot.y);
+		item.tile_type = spot.tile_type;
+		item.on_counter = spot.is_counter;
 		item.x = spot.x;
 		item.y = spot.y;
 		spot.full = true;
 	}
-	
-	if (item_spr == item_key["pot"]
+
+	if (item_spr == item_key["money"]) {
+		if (score !== -1) {
+			item.type = "money";
+			item.score = score;
+		}
+	}
+	else if (item_spr == item_key["pot"]
 		|| item_spr == item_key["fry_tray"]) {
 		item.contents = [];
 		item.cooked = false;
@@ -108,8 +90,6 @@ export function addItem(item_spr, spot) {
 		else if (item_spr == item_key["fry_tray"]) {
 			item.subtype = "fry_tray";
 		}
-
-		cookery.push(item);
 	}
 	else if (item_spr == item_key["bowl"]) {
 		item.contents = [];
@@ -156,21 +136,9 @@ export function addItem(item_spr, spot) {
 	setItemToMap(item.on_counter, item.spr, item.x, item.y);
 }
 
-
-function checkBottomTile(spot) {
-	if (typeof spot.id == "number") {
-		return [spot.id, spot.tile_type, spot.is_counter]; 
-	}
-	
-	return [-1, -1, false];
-}
-
 function addItemTileIds() {
 	let map_width = 16;
 	let map_height = 16;
-
-    let id_counter = 0;
-	let storage_counter = 0;
     
     for (let i = 0; i < map_width; i++) {
         for (let j  = 0; j < map_height; j++) {
@@ -190,9 +158,7 @@ function addItemTileIds() {
 				if (tile.sprite == spots.item_spot 
 					|| tile.sprite == spots.stove 
 					|| tile.sprite == spots.fryer) {
-					tile.id = id_counter;
 
-					tile_spot.id = id_counter;
 					tile_spot.is_counter = false;
 					tile_spot.type = "place";
 
@@ -208,10 +174,8 @@ function addItemTileIds() {
 						tile_spot.is_counter = true;
 						tile_spot.subtype = "utility";
 					}
-
-                	id_counter++;
 					
-                	item_tiles.push(tile_spot);
+                	item_tiles[getItemKey(tile_spot.x, tile_spot.y)] = tile_spot;
 					items[getItemKey(tile_spot.x, tile_spot.y)] = -1;
 				}
 				else if (tile.sprite == spots.storage) {
@@ -238,11 +202,15 @@ function addItemTileIds() {
 					tile_spot.open = false;
 					tile_spot.current_selection = 0;
 
-					tile_spot.id = storage_counter;
-					tile.id = storage_counter;
+					storages[getItemKey(tile_spot.x, tile_spot.y)] = tile_spot;
+				}
+				else if (tile.sprite == spots.belt) {
+					tile_spot.type = "place";
+            		tile_spot.subtype = "";
+					tile_spot.is_counter = true;
 
-					storage_counter++;
-					storage.push(tile_spot);
+					item_tiles[getItemKey(tile_spot.x, tile_spot.y)] = tile_spot;
+					items[getItemKey(tile_spot.x, tile_spot.y)] = -1;
 				}
 			}
         }
@@ -276,15 +244,13 @@ function checkCanPlace(spot, item_subtype) {
 }
 
 function checkCanPickUp(spot) {
-	if (spot == -1) {
-		return false;
-	}
+	if (spot == -1) { return false; }
 
 	return spot.full;
 }
 
 
-function plateFood(p_id, holding_item, held_item, check_item) {
+function plateFood(p_id, held_item, check_item) {
 	if (check_item.subtype == "pot" || check_item.subtype == "fry_tray") {
 		if (check_item.cooked) {
 			held_item.spr = check_item.contents; // number
@@ -308,37 +274,17 @@ function plateFood(p_id, holding_item, held_item, check_item) {
 				check_item.subtype = "food";
 				check_item.chef = p_id;
 				setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
-				let result = removeHeldItem();
-				return [result.holding_item, result.held_item, check_item];
+				return {"held_item": -1, "check_item": check_item};
 			}
 		}
 	}
 
-	return [holding_item, held_item, check_item];
+	return {"held_item": held_item, "check_item": check_item};
 }
 
-// function pourIngredientsIn(held_item, check_item) {
-// 	if (check_item == -1) {
-// 		return [held_item, check_item];
-// 	}
-
-// 	for (let i = 0; i < held_item.contents.length; i++) {
-// 		check_item.contents.push(held_item.contents[i]);
-// 	}
-
-// 	held_item.contents = [];
-// 	held_item.full = false;
-
-// 	if (check_item.contents.length !== 0) {
-// 		check_item.full = true;
-// 	}
-
-// 	return [held_item, check_item];
-// }
-
-function putIngredientIn(holding_item, held_item, check_item) {
+function putIngredientIn(held_item, check_item) {
 	if (check_item == -1 || (check_item.cooked || check_item.burned)) {
-		return [holding_item, held_item, check_item];
+		return {"held_item": held_item, "check_item": check_item};
 	}
 
 	if (!check_item.full) {
@@ -349,9 +295,8 @@ function putIngredientIn(holding_item, held_item, check_item) {
 
 	check_item.contents.push(held_item);
 	check_item.full = true;
-	let result = removeHeldItem();
 
-	return [result.holding_item, result.held_item, check_item];
+	return {"held_item": -1, "check_item": check_item};
 }
 
 
@@ -359,34 +304,27 @@ function pickUpItem(spot) {
 	let front_item = getItem(spot.x, spot.y);
 
 	if (front_item.spr == item_key["infinite_plates"]) {
-		return [addItem(item_key["plate"], -1), true];
+		return addItem(item_key["plate"], -1, -1);
 	}
 
 	removeItem(spot, front_item.x, front_item.y);
 
 	front_item.current_tile = -1;
 	front_item.tile_type = -1;
+	front_item.on_counter = false;
 	front_item.x = -8;
 	front_item.y = -8;
-	front_item.on_counter = false;
 
-	return [front_item, false];
+	return front_item;
 }
 
 
 function trashCanSpot(holding_item, held_item) {
 	if (!holding_item || held_item.type == "book") {
-		return [holding_item, held_item];
+		return held_item;
 	}
 
 	if (held_item.type == "cookery") {
-		// if (held_item.subtype == "container") {
-		// 	held_item.contents = [];
-		// 	held_item.full = false;
-
-		// 	return [holding_item, held_item];
-		// }
-
 		held_item.spr = item_key[held_item.subtype];
 		held_item.contents = [];
 		held_item.full = false;
@@ -394,7 +332,7 @@ function trashCanSpot(holding_item, held_item) {
 		held_item.burned = false;
 		held_item.chef = -1;
 
-		return [holding_item, held_item];
+		return held_item;
 	}
 
 	if (held_item.subtype == "food") {
@@ -402,41 +340,33 @@ function trashCanSpot(holding_item, held_item) {
 		held_item.type = "serve";
 		held_item.subtype = "plate";
 
-		return [holding_item, held_item];
+		return held_item;
 	}
-
-	let result = removeHeldItem();
 	
-	return [result.holding_item, result.held_item];
+	return -1;
 }
 
-
-function addPlateProperties() {
-
-}
-
-function placeItem(item, spot) {
+export function placeItem(item, spot) {
 	item.x = spot.x;
 	item.y = spot.y;
-	item.current_tile = spot.id;
+	item.current_tile = getItemKey(spot.x, spot.y);
 	item.tile_type = spot.tile_type;
 	item.on_counter = spot.is_counter;
 
 	items[getItemKey(spot.x, spot.y)] = item;
+	item_tiles[getItemKey(spot.x, spot.y)].full = true;
 
 	setItemToMap(item.on_counter, item.spr, item.x, item.y);
-
-	return true;
 }
 
 
-function interactSpot(p_id, tile_spots, tile_id, holding_item, held_item) {
-	let spot = tile_spots[tile_id];
+function interactSpot(p_id, tile_key, holding_item, held_item) {
+	let spot = item_tiles[tile_key];
 
 	if (holding_item) {
 		if (checkCanPlace(spot, held_item.subtype)) {
-			spot.full = placeItem(held_item, spot);
-			return [false, -1];
+			placeItem(held_item, spot);
+			return -1;
 		}
 
 		if (spot.full) {
@@ -446,101 +376,85 @@ function interactSpot(p_id, tile_spots, tile_id, holding_item, held_item) {
 				if (held_item.type == "cookery"
 					|| held_item.type == "book"
 					|| held_item.type == "food") {
-					return [holding_item, held_item];
+					return held_item;
 				}
 
 				if (held_item.subtype == "plate") {
-					let result = plateFood(p_id, holding_item, held_item, check_item);
-					holding_item = result[0];
-					held_item = result[1];
-					check_item = result[2];
+					let result = plateFood(p_id, held_item, check_item);
+					held_item = result.held_item;
+					check_item = result.check_item;
 				}
 				else {
-					let result = putIngredientIn(holding_item, held_item, check_item);
-					holding_item = result[0];
-					held_item = result[1];
-					check_item = result[2];
+					let result = putIngredientIn(held_item, check_item);
+					held_item = result.held_item;
+					check_item = result.check_item;
 				}
 
-				return [holding_item, held_item];
+				return held_item;
 			}
 
 			if (check_item.subtype == "plate") {
-				let result = plateFood(p_id, holding_item, held_item, check_item);
-				holding_item = result[0];
-				held_item = result[1];
-				check_item = result[2];
+				let result = plateFood(p_id, held_item, check_item);
+				held_item = result.held_item;
+				check_item = result.check_item;
 
-				return [holding_item, held_item];
+				return held_item;
 			}
 		}
 	}
 
 	if (!holding_item 
 		&& checkCanPickUp(spot)) {
-		let result = pickUpItem(spot);
-		held_item = result[0];
-		spot.full = result[1];
+		held_item = pickUpItem(spot);
 
-		return [true, held_item];
+		return held_item;
 	}
 
-	return [holding_item, held_item];
+	return held_item;
 }
 
 export function checkStorage(tile, holding_item) {
 	if (tile.sprite == spots.storage 
 		&& !holding_item) {
-		for (let i = 0; i < storage.length; i++) {
-			if (storage[i].id == tile.id && !storage[i].open) {
-				storage[i].open = true;
-				return storage[i].id;
-			}
-		}
+		storages[getItemKey(tile.x, tile.y)].open = true;
+		return getItemKey(tile.x, tile.y);
 	}
 
 	return -1;
 }
 
-export function confirmFront(p_id, tile, held_item, holding_item) {	
+export function interactFront(p_id, tile, holding_item, held_item) {
 	if (tile.sprite == spots.stove 
 		|| tile.sprite == spots.fryer 
-		|| tile.sprite == spots.item_spot) {
-		return interactSpot(p_id, item_tiles, tile.id, holding_item, held_item);
-	}
-	else if (tile.sprite == spots.belt) {
-		return interactSpot(p_id, belts, tile.id, holding_item, held_item);
+		|| tile.sprite == spots.item_spot
+		|| tile.sprite == spots.belt) {
+		return interactSpot(p_id, getItemKey(tile.x, tile.y), holding_item, held_item);
 	}
 	else if (tile.sprite == spots.trashcan) {
 		return trashCanSpot(holding_item, held_item);
 	}
 
-    return [holding_item, held_item];
+    return held_item;
 }
 
 export function grabStorageItem(storage_id) {
-	const current_storage = storage[storage_id];
-	const current_storage_contents = current_storage.contents;
-	const currently_selected = current_storage.current_selection;
+	const storage = storages[storage_id];
+	storage.open = false;
 
-	const item = addItem(current_storage_contents[currently_selected], -1);
-
-	current_storage.open = false;
-
-	return [true, item, false];
+	return addItem(storage.contents[storage.current_selection], -1, -1);
 }
 
 export function leaveStorage(storage_id) {
-	storage[storage_id].open = false;
+	storages[storage_id].open = false;
 }
 
 export function moveStorageSelection(storage_id, move) {
-	const current_storage = storage[storage_id];
+	const storage = storages[storage_id];
 
-	if (current_storage.open) {
+	if (storage.open) {
 		const min_choice = 0;
-		const max_choice = current_storage.max_choice - 1;
-		let selection = current_storage.current_selection;
+		const max_choice = storage.max_choice - 1;
+		let selection = storage.current_selection;
 
 		if (move == direction.right) { selection++; }
 		else if (move == direction.left) { selection--; }
@@ -548,7 +462,7 @@ export function moveStorageSelection(storage_id, move) {
 		if (selection >= max_choice) { selection = max_choice; }
 		if (selection < min_choice) { selection = min_choice; }
 
-		current_storage.current_selection = selection;
+		storage.current_selection = selection;
 	}
 }
 
@@ -575,16 +489,16 @@ export function getItem(x, y) {
 export function removeItem(spot, x, y) {
 	// getMapTile(map_item, x, y).full = false;
 
-	spot.full = false; // hmm
 	removeItemFromMap(spot.is_counter, spot.x, spot.y); // hmmm
 	items[getItemKey(x, y)] = -1;
+	item_tiles[getItemKey(x, y)].full = false;
 }
 
 
 // Player interaction cooking
 
-export function cookTheItems(p_id, tile_id) {
-	let tile = item_tiles[tile_id];
+export function cookTheItems(p_id, tile_key) {
+	let tile = item_tiles[tile_key];
 
 	if ((tile.tile_type == spots.fryer || tile.tile_type == spots.stove) && tile.full) {
 		let cookery = items[getItemKey(tile.x, tile.y)];
@@ -653,25 +567,24 @@ function checkRecipe(contents, item_recipes) {
 
 
 function drawStorageMenu() {
-	for (let i = 0; i < storage.length; i++) {
-		if (storage[i].open) {
-			const current_storage = storage[i].contents;
+	for (const [key, storage] of Object.entries(storages)) {
+		if (storage.open) {
 			const bg = 48;
 			const arrow = 131;
+			const offset_2 = -8;
 
-			const currently_selected = storage[i].current_selection;
-			const min_choice = 0;
-			const max_choice = storage[i].max_choice;
+			const currently_selected = storage.current_selection;
 
-			if (currently_selected !== min_choice) { // left
-				sprite(arrow, storage[i].x * 8 - 8, storage[i].y * 8 - 8, true);
-			}
-			if (currently_selected !== max_choice - 1) { // right
-				sprite(arrow, storage[i].x * 8 + 8, storage[i].y * 8 - 8);
+			if (currently_selected !== 0) { // left
+				sprite(arrow, storage.x * 8 - 8, storage.y * 8 + offset_2, true);
 			}
 
-			sprite(bg, storage[i].x * 8, storage[i].y * 8 - 8);
-			sprite(current_storage[currently_selected], storage[i].x * 8, storage[i].y * 8 - 8);
+			if (currently_selected !== storage.max_choice - 1) { // right
+				sprite(arrow, storage.x * 8 + 8, storage.y * 8 + offset_2);
+			}
+
+			sprite(bg, storage.x * 8, storage.y * 8 - 8);
+			sprite(storage.contents[currently_selected], storage.x * 8, storage.y * 8 + offset_2);
 		}
 	}
 }
@@ -680,7 +593,7 @@ export function drawRecipe(book) {
     const recipe_pages = book.pages;
 	const recipes = book.recipes;
 	const min_choice = 0;
-    const max_choice = recipe_pages.length;
+    const max_choice = recipe_pages.length - 1;
 
     const currently_selected = book.current_selection;
     const recipe = recipe_pages[currently_selected];
@@ -696,7 +609,7 @@ export function drawRecipe(book) {
     if (currently_selected !== min_choice) { // left
         sprite(arrow, book.x - 8, book.y + image_offset_y, true);
     }
-	if (currently_selected !== max_choice - 1) { // right
+	if (currently_selected !== max_choice) { // right
         sprite(arrow, book.x + 8, book.y + image_offset_y);
     }
 
@@ -763,22 +676,16 @@ export function drawBottomItems() {
 
 // DRAW END
 
-export function printItems() {
-	console.log(items);
-}
-
 export function resetItems() {
 	clearItemMaps();
-	items = [];
 
-	for (let i = 0; i < item_tiles.length; i++) {
-		item_tiles[i].full = false;
+	for (const [key, item] of Object.entries(item)) {
+		item = -1;
 	}
 
-	addItem(item_key["pot"], belts[0]);
-	addItem(item_key["pot"], belts[3]);
-	addItem(item_key["fry_tray"], belts[8]);
-	addItem(item_key["fryer_book"], belts[5]);
-	addItem(item_key["stove_book"], belts[10]);
-	addItem(item_key["infinite_plates"], belts[12]);
+	for (const [key, item_tile] of Object.entries(item_tiles)) {
+		item_tile.full = false;
+	}
+
+	spawnItems();
 }
