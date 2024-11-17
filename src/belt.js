@@ -1,6 +1,6 @@
 import { getMapTile, map_logic} from "./map.js";
 import { direction, spots } from "./idkeys.js";
-import { items, item_tiles, getItemKey, removeItem, placeItem } from "./item.js";
+import { checkCanPlace, checkCanPickUp, items, item_tiles, getItemKey, removeItem, placeItem, spawnBeltItems } from "./item.js";
 import { npcCheck } from "./npc.js";
 import { platers } from "./player.js";
 
@@ -14,7 +14,6 @@ let current_timer = 0;
 
 export const belts = {};
 
-
 export function setUpBelts() {
     createBelts();
 }
@@ -22,8 +21,6 @@ export function setUpBelts() {
 function createBelts() {
     let map_width = 16;
     let map_height = 16;
-    
-    // let belt_count = 0;
     
     for (let i = 0; i < map_height; i++) {
         for (let j = 0; j < map_width; j++) {
@@ -33,7 +30,6 @@ function createBelts() {
                     || tile.sprite == belt_type.corner) {
                     let belt = {
                         "nkey": -1,
-                        // "full": false,
                         "dir": findBeltDirection(tile),
                         "end": false,
                         "x": tile.x,
@@ -54,13 +50,10 @@ function createBelts() {
                     else { belt.end = true; }
 
                     belts[getItemKey(belt.x, belt.y)] = belt;
-                    // belt_count++;
                 }
             }
         }
     }
-
-    // belts["length"] = belt_count;
 }
 
 function getNextBelt(bdir, bx, by) {
@@ -126,21 +119,51 @@ export function beltMoveItems() {
         let moved_items = {};
 
         for (const [key, b] of Object.entries(b_items)) {
-            removeItem(item_tiles[key], items[key].x, items[key].y);
+            if (items[key] !== undefined && items[key] !== -1) {
+                if (checkCanPickUp(item_tiles[key])) {
+                    removeItem(item_tiles[key], items[key].x, items[key].y);
 
-            const belt = belts[b.current_tile];
-            b.x = belt.nx;
-            b.y = belt.ny;
-            b.on_counter = true;
-            b.current_tile = belt.nkey;
-            moved_items[b.current_tile] = b;
+                    const belt = belts[b.current_tile];
+                    b.x = belt.nx;
+                    b.y = belt.ny;
+                    b.on_counter = true;
+                    b.current_tile = belt.nkey;
+                    moved_items[b.current_tile] = b;
+                }
+            }
         }
 
         for (const [key, m] of Object.entries(moved_items)) {
-            placeItem(m, item_tiles[key]);
+            if (checkCanPlace(item_tiles[key], m.subtype)) {
+                placeItem(m, item_tiles[key]);
+            }
         }
 
         current_timer = 0;
     }
     else { current_timer++; }
 } 
+
+export function resetBelts() {
+    current_timer = 0;
+    let b_items = {};
+    let b_counter = 0;
+
+    for (const [key, belt] of Object.entries(belts)) {
+        if (items[key] !== undefined && items[key] !== -1) {
+            b_items[key] = items[key];
+            b_counter++;
+        }
+    }
+
+    if (b_counter == 0) { // could do bool
+        return;
+    }
+
+    for (const [key, b] of Object.entries(b_items)) {
+        removeItem(item_tiles[key], items[key].x, items[key].y);
+    }
+
+    spawnBeltItems();
+    current_timer = 0;
+}

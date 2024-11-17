@@ -18,10 +18,10 @@ export function setUpItems() {
 	setUpKeyNames();
     addItemTileIds();
 
-	spawnItems();
+	spawnBeltItems();
 }
 
-function spawnItems() {
+export function spawnBeltItems() {
 	addItem(item_key["pot"], item_tiles[getItemKey(5,3)], -1);
 	addItem(item_key["pot"], item_tiles[getItemKey(7, 3)], -1);
 	addItem(item_key["fry_tray"], item_tiles[getItemKey(8,3)], -1);
@@ -217,8 +217,8 @@ function addItemTileIds() {
     }
 }
 
-function checkCanPlace(spot, item_subtype) {
-	if (spot.full) {
+export function checkCanPlace(spot, item_subtype) {
+	if (spot == undefined || spot.full) {
 		return false;
 	}
 
@@ -243,8 +243,8 @@ function checkCanPlace(spot, item_subtype) {
 	return false;
 }
 
-function checkCanPickUp(spot) {
-	if (spot == -1) { return false; }
+export function checkCanPickUp(spot) {
+	if (spot == undefined || spot == -1) { return false; }
 
 	return spot.full;
 }
@@ -303,6 +303,10 @@ function putIngredientIn(held_item, check_item) {
 function pickUpItem(spot) {
 	let front_item = getItem(spot.x, spot.y);
 
+	if (front_item == undefined || front_item == -1) {
+		return -1;
+	}
+
 	if (front_item.spr == item_key["infinite_plates"]) {
 		return addItem(item_key["plate"], -1, -1);
 	}
@@ -347,6 +351,10 @@ function trashCanSpot(holding_item, held_item) {
 }
 
 export function placeItem(item, spot) {
+	if (item == undefined || item == -1) {
+		return;
+	}
+
 	item.x = spot.x;
 	item.y = spot.y;
 	item.current_tile = getItemKey(spot.x, spot.y);
@@ -489,7 +497,7 @@ export function getItem(x, y) {
 export function removeItem(spot, x, y) {
 	// getMapTile(map_item, x, y).full = false;
 
-	removeItemFromMap(spot.is_counter, spot.x, spot.y); // hmmm
+	removeItemFromMap(spot.is_counter, spot.x, spot.y);
 	items[getItemKey(x, y)] = -1;
 	item_tiles[getItemKey(x, y)].full = false;
 }
@@ -677,9 +685,7 @@ export function drawBottomItems() {
 // DRAW END
 
 export function resetItems() {
-	clearItemMaps();
-
-	for (const [key, item] of Object.entries(item)) {
+	for (const [key, item] of Object.entries(items)) {
 		item = -1;
 	}
 
@@ -687,5 +693,5 @@ export function resetItems() {
 		item_tile.full = false;
 	}
 
-	spawnItems();
+	clearItemMaps();
 }

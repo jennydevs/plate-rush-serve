@@ -1,6 +1,7 @@
 import { resetPlayers } from "./player.js";
 import { resetNPCS } from "./npc.js";
 import { resetItems } from "./item.js";
+import { resetBelts } from "./belt.js";
 
 let og_game_timer = 18000;
 let game_timer = og_game_timer; // 18000 = 5 minutes
@@ -33,6 +34,7 @@ export function resetGame() {
     resetPlayers();
     resetNPCS();
     resetItems();
+    resetBelts();
 
     game_timer = og_game_timer;
 
