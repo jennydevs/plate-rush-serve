@@ -1,106 +1,50 @@
 import { getTile, getMapTile, map_solid, map_item, map_furniture } from "./map.js";
-import { confirmFront, checkStorage, moveStorageSelection, grabStorageItem, cookTheItems, throwAwayItem, locateHeldItemIndex, leaveStorage, printItems, drawRecipe, drawItemsInContainer, resetItems, moveBookSelection} from "./item.js";
-import { spots, direction} from "./idkeys.js";
-import { resetNPCS } from './npc.js';
+import { interactFront, checkStorage, moveStorageSelection, grabStorageItem, cookTheItems, leaveStorage, drawRecipe, drawItemsInContainer, moveBookSelection, getItemKey} from "./item.js";
+import { spots, direction } from "./idkeys.js";
 
+export const platers = {};
 
-export var p1 = {
-    "id": 0,
-    "px": 50,
-    "py": 60,
-    "w": 4,
-    "h": 8,
-    "offset": 2,
-    "speed": 5,
-    "spr": 127,
-    "flipped": false,
-    "held_item": -1,
-    "holding_item": false,
-    "dir": -1,
-    "opened_storage": false,
-    "storage_id": -1,
-    "opened_book": false,
-    "front": {
-        "spr": 106,
-        "fx": 60,
-        "fy": 60,
-    },
-    "control_type": 1,
-    "carrying_container": false,
-    "on_belt": false,
-    "on_counter": false,
-    "bid": -1,
-    "score": 0,
-    "high_score": 0,
-};
+export function setUpPlaters() {
+    platers[0] = Plater(0, 127, 50, 60, 106, 1, 0);
+    platers[1] = Plater(1, 111, 70, 60, 106, 2, 0);
+}
 
-export var p2 = {
-    "id": 1,
-    "px": 70,
-    "py": 60,
-    "speed": 5,
-    "spr": 111,
-    "flipped": false,
-    "held_item": -1,
-    "holding_item": false,
-    "dir": -1,
-    "opened_storage": false,
-    "storage_id": -1,
-    "opened_book": false,
-    "front": {
-        "spr": 106,
-        "tile": -1,
-        "fx": 60,
-        "fy": 60,
-    },
-    "control_type": 2,
-    "carrying_container": false,
-    "on_belt": false,
-    "on_counter": false,
-    "pid": -1,
-    "score": 0,
-    "high_score": 0,
-};
-
+function Plater(id, spr, x, y, front_spr, control_type, high_score) {
+    return {
+        "id": id,
+        "px": x,
+        "py": y,
+        "w": 4,
+        "h": 8,
+        "spr": spr,
+        "offset": 2,
+        "speed": 5,
+        "flipped": false,
+        "held_item": -1,
+        "holding_item": false,
+        "dir": -1,
+        "opened_storage": false,
+        "storage_id": -1,
+        "opened_book": false,
+        "front": {
+            "spr": front_spr,
+            "fx": x,
+            "fy": y,
+        },
+        "control_type": control_type,
+        "carrying_container": false,
+        "on_belt": false,
+        "on_counter": false,
+        "score": 0,
+        "high_score": high_score,
+    };
+}
 
 export function updatePlayers(dt) {
-    p1 = movePlayer(dt, p1);
-    p2 = movePlayer(dt, p2);
+    platers[0] = movePlayer(dt, platers[0]);
+    platers[1] = movePlayer(dt, platers[1]);
 }
 
-export function drawPlayers() {
-    drawPlayerItem(p2);
-    if (!p2.on_belt && !p2.on_counter) {
-        drawPlayer(p2);
-    }
-
-    drawPlayerItem(p1);
-    if (!p1.on_belt && !p1.on_counter) {
-        drawPlayer(p1);
-    }
-}
-
-export function drawPlayersOnTop() {
-    drawPlayerItem(p2);
-    if (p2.on_belt || p2.on_counter) {
-        drawPlayer(p2);
-    }
-
-    drawPlayerItem(p1);
-    if (p1.on_belt || p1.on_counter) {
-        drawPlayer(p1);
-    }
-}
-
-export function drawPlayerFront() {
-    drawFrontOfPlayer(p2);
-    drawFrontOfPlayer(p1);
-}
-
-export function drawHand() {
-    drawPlayerItem(p2);
-    drawPlayerItem(p1);
-}
 
 
 export function movePlayer(dt, p) { 
@@ -145,52 +89,36 @@ export function movePlayer(dt, p) {
         let vy = 0;
 
         if (!p.on_belt){
-            if (btn_right 
-                && !btn_left 
-                && !btn_c) { 
+            if (btn_right && !btn_left && !btn_c) { 
                 vx = p.speed; 
                 p.dir = direction.right;
                 p.flipped = false;
             }
-            if (btn_left 
-                && !btn_right 
-                && !btn_c) { 
+            if (btn_left && !btn_right && !btn_c) { 
                 vx = -(p.speed); 
                 p.dir = direction.left;
                 p.flipped = true;
             }
-            if (btn_up 
-                && !btn_down 
-                && !btn_c) { 
+            if (btn_up && !btn_down && !btn_c) { 
                 vy = -(p.speed); 
                 p.dir = direction.up;
             }
-            if (btn_down 
-                && !btn_up 
-                && !btn_c) { 
+            if (btn_down && !btn_up && !btn_c) { 
                 vy = p.speed; 
                 p.dir = direction.down;
             }
         }
         else if (p.on_belt) {
-            if (btn_right 
-                && !btn_left 
-                && !btn_c) { 
+            if (btn_right && !btn_left && !btn_c) { 
                 p.dir = direction.right;
             }
-            if (btn_left 
-                && !btn_right 
-                && !btn_c) { 
+            if (btn_left && !btn_right && !btn_c) { 
                 p.dir = direction.left;
             }
-            if (btn_up 
-                && !btn_down 
-                && !btn_c) { 
+            if (btn_up && !btn_down && !btn_c) { 
                 p.dir = direction.up;
             }
-            if (btn_down 
-                && !btn_up 
-                && !btn_c) { 
+            if (btn_down && !btn_up && !btn_c) { 
                 p.dir = direction.down;
             }
         }
@@ -203,42 +131,39 @@ export function movePlayer(dt, p) {
             p.front.fx = tx * 8;
             p.front.fy = ty * 8;
 
-            if (btnp_space 
-                && !btnp_c) {
-
+            if (btnp_space && !btnp_c) {
                 let tile = getMapTile(map_item, tx, ty);
                 
                 if (tile !== -1) {
-                    let result = checkForItem(tile, p.holding_item, p.held_item, tx , ty, p.id);
-                    p.holding_item = result[0];
-                    p.held_item = result[1];
-                    p.carrying_container = result[2];
-                    p.opened_storage = result[3];
-                    p.storage_id = result[4];
-                    p.opened_book = result[5];
-                    p.score += result[6];
+                    let result = lookFront(tile, p.holding_item, p.held_item, tx , ty, p.id);
+                    p.held_item = result[0];
+                    p.carrying_container = result[1];
+                    p.opened_storage = result[2];
+                    p.storage_id = result[3];
+                    p.opened_book = result[4];
+                    p.score += result[5];
+
+                    if (p.held_item !== -1) {
+                        p.holding_item = true;
+                    }
+                    else {
+                        p.holding_item = false;
+                    }
                 }
             }
 
-            if (btnp_c 
-                && !btnp_space) {
-                    printItems();
+            if (btnp_c && !btnp_space) {
                 let tile = getTile(map_item, p.front.fx, p.front.fy);
                 if (tile !== -1){
                     if (tile.sprite == spots.fryer || tile.sprite == spots.stove) {
-                        cookTheItems(p.id, tile.id);
+                        cookTheItems(p.id, getItemKey(tile.x, tile.y));
                     }
                     else if (tile.sprite == spots.item_spot) {
                         if (!p.opened_book) { // dont hop around when holding the book
                             p.on_belt = false;
-                            p.bid = -1;
                             cx = p.front.fx;
                             cy = p.front.fy;
                         }
-                        // p.on_belt = false; // test this
-                        // p.bid = -1;
-                        // cx = p.front.fx;
-                        // cy = p.front.fy;
 
                         let tile_2 = getTile(map_furniture, p.front.fx, p.front.fy);
                         if (tile_2.sprite == spots.counter) {
@@ -250,29 +175,19 @@ export function movePlayer(dt, p) {
                     }
                     else if (tile.sprite == spots.belt) {
                         p.on_belt = true;
-                        p.bid = tile.id;
                         cx = p.front.fx;
                         cy = p.front.fy;
                     }
                 }
             }
-            
         }
     
         if (p.opened_book) {
-            if (
-                btn_c 
-                && btnp_right 
-                && !btnp_left
-            ) {
+            if (btn_c && btnp_right && !btnp_left) {
                 p.held_item.current_selection = moveBookSelection(direction.right, p.held_item.current_selection, p.held_item.max_choice);
             }
 
-            if (
-                btn_c 
-                && btnp_left 
-                && !btnp_right
-            ) {
+            if (btn_c && btnp_left && !btnp_right) {
                 p.held_item.current_selection = moveBookSelection(direction.left, p.held_item.current_selection, p.held_item.max_choice);
             }
         }
@@ -288,19 +203,19 @@ export function movePlayer(dt, p) {
         cx = horizontalCollide(vx, cx, p.py);
         cy = verticalCollide(vy, cy, p.px);
 
-        // END (Basically the movement code, but adapted for top-down)
+        // END (movement code, but adapted for top-down)
     
         const limit = constrainBoundaries(cx, cy);
 
         p.px = limit.cx;
         p.py = limit.cy;
 
-        let t = getTile(map_furniture, p.px, p.py);
-        if (t !== -1) {
-            if (t.sprite == spots.counter && !p.on_counter) {
+        let tile = getTile(map_furniture, p.px, p.py);
+        if (tile !== -1) {
+            if (tile.sprite == spots.counter && !p.on_counter) {
                 p.on_counter = true;
             }
-            else if (t.sprite != spots.counter && p.on_counter) {
+            else if (tile.sprite != spots.counter && p.on_counter) {
                 p.on_counter = false;
             }
         }
@@ -317,27 +232,21 @@ export function movePlayer(dt, p) {
     }
 
     if (p.opened_storage) {
-        if (btnp_c 
-            && !btnp_space && !btnp_left && !btnp_right) {
+        if (btnp_c && !btnp_space && !btnp_left && !btnp_right) {
             leaveStorage(p.storage_id);
             p.opened_storage = false;
         }
-        if (btnp_right 
-            && !btnp_left) {
+        if (btnp_right && !btnp_left) {
             moveStorageSelection(p.storage_id, direction.right);
         }
-        if (btnp_left 
-            && !btnp_right) {
+        if (btnp_left && !btnp_right) {
             moveStorageSelection(p.storage_id, direction.left);
         }
-        if (btnp_space
-            && !btnp_left && !btnp_right) {
-            const result = grabStorageItem(p.storage_id);
-            p.holding_item = result[0];
-            p.held_item = result[1];
-            p.opened_storage = result[2];
+        if (btnp_space && !btnp_left && !btnp_right) {
+            p.held_item = grabStorageItem(p.storage_id);
+            p.holding_item = true;
+            p.opened_storage = false;
         }
-
         return p;
     }
 }
@@ -439,28 +348,30 @@ function checkFront(p_dir, px, py) {
     return front_coords;
 }
 
-export function removeHeldItem() {
-    return {"holding_item": false, "held_item": -1};
-}
-
-
-function checkForItem(tile, holding_item, held_item, px, py, p_id) {
+function lookFront(tile, holding_item, held_item, px, py, p_id) {
     let collected_score = 0;
     let carrying_container = false;
     let opened_book = false;
     let storage_id = -1;
     let opened_storage = false;
     
-    let result = confirmFront(p_id, tile, held_item, holding_item);
-    holding_item = result[0];
-    held_item = result[1];
-
-    let check = checkStorage(tile, holding_item);
-
-    if (check !== -1) {
-        opened_storage = true;
-        storage_id = check;
+    if (tile.sprite == spots.storage) {
+        let check = checkStorage(tile, holding_item);
+        if (check !== -1) {
+            opened_storage = true;
+            storage_id = check;
+        }
     }
+    else {
+        held_item = interactFront(p_id, tile, holding_item, held_item);
+        if (held_item !== -1) {
+            holding_item = true;
+        }
+        else {
+            holding_item = false;
+        }
+    }
+
 
     if (holding_item) {
         held_item.x = px;
@@ -477,26 +388,64 @@ function checkForItem(tile, holding_item, held_item, px, py, p_id) {
         }
         else if (held_item.type == "money") {
             collected_score += held_item.score;
-
-            let result = removeHeldItem();
-            holding_item = result.holding_item;
-            held_item = result.held_item;
+            held_item = -1;
         }
     }
         
-    return [holding_item, held_item, carrying_container, 
+    return [held_item, carrying_container, 
         opened_storage, storage_id, opened_book, collected_score];
 }
 
 
 // DRAWING
 
-export function drawPlayer(p) {
+export function drawScore() { // 5 tall 3 wide
+    rectf(0,0,21,13);
+    let offset = 1;
+
+    for (const [key, plater] of Object.entries(platers)) {
+        print("" + (plater.id + 1) + ":" + plater.score + "\n", 1, offset);
+        offset += 6;
+    }
+}
+
+export function drawPlayers() {
+    for (const [key, plater] of Object.entries(platers)) {
+        drawPlayerItem(plater);
+
+        if (!plater.on_belt && !plater.on_counter) {
+            drawPlayer(plater);
+        }
+    }
+}
+
+export function drawPlayersOnTop() {
+    for (const [key, plater] of Object.entries(platers)) {
+        drawPlayerItem(plater);
+
+        if (plater.on_belt || plater.on_counter) {
+            drawPlayer(plater);
+        }
+    }
+}
+
+export function drawPlayerFront() {
+    for (const [key, plater] of Object.entries(platers)) {
+        drawFrontOfPlayer(plater);
+    }
+}
+
+export function drawHand() {
+    for (const [key, plater] of Object.entries(platers)) {
+        drawPlayerItem(plater);
+    }
+}
+
+function drawPlayer(p) {
     sprite(p.spr, p.px, p.py, p.flipped);
 }
 
-
-export function drawPlayerItem(p) {
+function drawPlayerItem(p) {
     let holding_item = p.holding_item;
     let held_item = p.held_item;
 
@@ -508,129 +457,21 @@ export function drawPlayerItem(p) {
     }
 }
 
-
-export function drawFrontOfPlayer(p) {
-    let front = p.front;
-    sprite(front.spr, front.fx, front.fy);
+function drawFrontOfPlayer(p) {
+    sprite(p.front.spr, p.front.fx, p.front.fy);
 }
 
-
-export function drawScore() { // 5 tall 3 wide
-    rectf(0,0,21,13)
-    print("1:" + p1.score + "\n", 1, 1)
-    print("2:" + p2.score, 1,7)
-}
 
 // DRAWING END
-let og_game_timer = 18000;
-let game_timer = og_game_timer; // 18000 = 5 minutes
-let end_game = 0;
 
-export function gameTimer() {
-    if (game_timer >= end_game) {
-        game_timer--;
-        let total_seconds = game_timer / 60; // 60 frames a second
-        let minutes = total_seconds / 60;
-        let seconds = total_seconds % 60;
-        if (minutes >= 0 && seconds >= 0) {
-            drawTimer(minutes, seconds);
-        } else {
-            print("0:00", 60, 60);
-        }
-        return false;
+export function resetPlayers() {
+    if (platers[0].score > platers[0].high_score) {
+        platers[0].high_score = platers[0].score;
+    }
+    if (platers[1].score > platers[1].high_score) {
+        platers[1].high_score = platers[1].score;
     }
 
-    print("0:00", 60, 60);
-    return true;
-}
-
-function drawTimer(minutes, seconds) {
-    (seconds > 10) ? print(Math.floor(minutes) + ":" + Math.floor(seconds), 60, 60) 
-            : print(Math.floor(minutes) + ":0" + Math.floor(seconds), 60, 60);
-}
-
-
-export function resetGame() {
-    let reset_p1 = {
-        "id": 0,
-        "px": 50,
-        "py": 60,
-        "w": 4,
-        "h": 8,
-        "offset": 2,
-        "speed": 5,
-        "spr": 127,
-        "flipped": false,
-        "held_item": -1,
-        "holding_item": false,
-        "dir": -1,
-        "opened_storage": false,
-        "storage_id": -1,
-        "opened_book": false,
-        "front": {
-            "spr": 106,
-            "fx": 60,
-            "fy": 60,
-        },
-        "control_type": 1,
-        "carrying_container": false,
-        "on_belt": false,
-        "on_counter": false,
-        "bid": -1,
-        "score": 0,
-        "high_score": 0,
-    };
-
-    if (p1.score > p1.high_score) { // reset need to move high score somewhere else
-        reset_p1.high_score = p1.score;
-    } 
-    else {
-        reset_p1.high_score = p1.high_score; 
-    }
-
-    p1 = reset_p1;
-
-    let reset_p2 = {
-        "id": 1,
-        "px": 70,
-        "py": 60,
-        "speed": 5,
-        "spr": 111,
-        "flipped": false,
-        "held_item": -1,
-        "holding_item": false,
-        "dir": -1,
-        "opened_storage": false,
-        "storage_id": -1,
-        "opened_book": false,
-        "front": {
-            "spr": 106,
-            "tile": -1,
-            "fx": 60,
-            "fy": 60,
-        },
-        "control_type": 2,
-        "carrying_container": false,
-        "on_belt": false,
-        "on_counter": false,
-        "pid": -1,
-        "score": 0,
-        "high_score": 0,
-    };
-
-    if (p2.score > p2.high_score) {
-        reset_p2.high_score = p2.score;
-    }
-    else {
-        reset_p2.high_score = p2.high_score; 
-    }
-
-    p2 = reset_p2;
-
-    resetNPCS();
-    resetItems();
-
-    game_timer = og_game_timer;
-
-    return false; // game end
+    platers[0] = Plater(0, 127, 50, 60, 106, 1, platers[0].high_score);
+    platers[1] = Plater(1, 111, 70, 60, 106, 2, platers[1].high_score);
 }
