@@ -496,7 +496,7 @@ function getNextWalkSpace(walk_space) {
 
 function setUpTables() {
     for (let i = 0; i < tables.length; i++) {
-        let result = checkBeltDirection(tables[i].x, tables[i].y); // there was a 3rd parameter issue
+        let result = checkBeltDirection(tables[i].x, tables[i].y);
         tables[i].bid = result[0];
         tables[i].dir = result[1];
 
@@ -702,7 +702,8 @@ function orderItem() {
 }
 
 function createNPC() {
-    if (open_single_seats.length == 0 && open_table_seats.length == 0) {
+    if (open_single_seats.length == 0 
+        && open_table_seats.length == 0) {
         return;
     }
 
@@ -716,28 +717,28 @@ function createNPC() {
     let timer = 30;
     let table_seat = false;
 
-    if (dining_type == 0 && open_single_seats.length != 0) {
-        random_seating = random(open_single_seats.length);
-        seating_id = open_single_seats[random_seating];
-        seating = single_seats[seating_id];
-        npc_amt = 1;
+    if (dining_type == 0 
+        && open_single_seats.length != 0) {
+            random_seating = random(open_single_seats.length);
+            seating_id = open_single_seats[random_seating];
+            seating = single_seats[seating_id];
+            npc_amt = 1;
     }
-    else if (dining_type == 1 && open_table_seats.length != 0) {
-        random_seating = random(open_table_seats.length);
-        seating_id = open_table_seats[random_seating];
-        seating = tables[seating_id];
+    else if (dining_type == 1 
+        && open_table_seats.length != 0) {
+            random_seating = random(open_table_seats.length);
+            seating_id = open_table_seats[random_seating];
+            seating = tables[seating_id];
 
-        let seat_count = seating.group.seating_group.length;
-        npc_amt = Math.floor(Math.random() * (seat_count + 1));
+            let seat_count = seating.group.seating_group.length;
+            npc_amt = Math.floor(Math.random() * ((seat_count + 1) - 2) + 2); // hmm
 
-        if (npc_amt > seat_count) {
-            npc_amt = seat_count;
-        }
+            if (npc_amt > seat_count) { npc_amt = seat_count; }
 
-        seating.current_people = npc_amt;
-        seating.people_served = 0;
+            seating.current_people = npc_amt;
+            seating.people_served = 0;
 
-        table_seat = true;
+            table_seat = true;
     }
 
     for (let i = 0; i < npc_amt; i++) {
@@ -775,28 +776,22 @@ function createNPC() {
 }
 
 
-// pls fix npc not sitting down when served but whole group not done
 export function drawNPC()  {
     for (let i = npcs.length - 1; i >= 0; i--) {
         if (npcs[i].sitting) {
-            if (npcs[i].dir == direction.left) {
-                sprite(npcs[i].spr, npcs[i].x * 8, npcs[i].y * 8, true);
-                if (npcs[i].table_seat) { // draws more than it should really
-                    sprite(90, item_tiles[npcs[i].belt].x * 8, item_tiles[npcs[i].belt].y * 8);
-                }
-                else {
-                    sprite(90, belts[npcs[i].front].x * 8, belts[npcs[i].front].y * 8);
-                }
-            }
-            if(npcs[i].dir == direction.right) {
-                sprite(npcs[i].spr, npcs[i].x * 8, npcs[i].y * 8);
-                if (npcs[i].table_seat) { // draws more than it should really
-                    sprite(90, item_tiles[npcs[i].belt].x * 8, item_tiles[npcs[i].belt].y * 8);
-                }
-                else {
-                    sprite(90, item_tiles[npcs[i].front].x * 8, item_tiles[npcs[i].front].y * 8);
-                }
-            }
+            let id = npcs[i].front;
+            let flipped = false;
+
+            if (npcs[i].table_seat) { id = npcs[i].belt; }
+            if (npcs[i].dir == direction.left) { flipped = true };
+
+            sprite(npcs[i].spr, npcs[i].x * 8, npcs[i].y * 8, flipped);
+            sprite(90, item_tiles[id].x * 8, item_tiles[id].y * 8);
+        }
+        else if (npcs[i].table_seat && npcs[i].served) {
+            let flipped = false;
+            if (npcs[i].dir == direction.left) { flipped = true };
+            sprite(npcs[i].spr, npcs[i].x * 8, npcs[i].y * 8, flipped);
         }
         else {
             sprite(npcs[i].spr, npcs[i].x * 8, npcs[i].y * 8);
@@ -806,9 +801,20 @@ export function drawNPC()  {
 
 export function drawNPCOrders() {
     for (let i = npcs.length - 1; i >= 0; i--) {
-        if (!npcs[i].served && npcs[i].sitting) { // make the orders on top of the npc// TODO to not cover the belt, should draw sprite above head based on direction
-            sprite(49, npcs[i].x * 8, (npcs[i].y * 8) - 8);
-            sprite(npcs[i].order.food, npcs[i].x * 8, (npcs[i].y * 8) - 8);
+        if (!npcs[i].served && npcs[i].sitting) {
+            let npc_x = npc_x = npcs[i].x;
+            let npc_y = npc_y = npcs[i].y;
+            let offset = -8;
+
+            if (npcs[i].table_seat) {
+                npc_x = npcs[i].front[0];
+                npc_y = npcs[i].front[1];
+                offset = 0;
+            }
+
+            sprite(49, npc_x * 8, npc_y * 8 + offset);
+            sprite(npcs[i].order.food, npc_x * 8, npc_y * 8 + offset); 
+            sprite(50, npc_x * 8, npc_y * 8 + offset);
         }
     }
 }
@@ -817,46 +823,41 @@ export function npcCheck(belt_items) {
     for (let i = 0; i < npcs.length; i++) {
         for (const [key, b] of Object.entries(belt_items)) {
             let bid = b.current_tile;
-            if (npcs[i].table_seat && npcs[i].sitting && !npcs[i].served) { // TABLE
-                if (npcs[i].belt == bid) {
-                    if (npcs[i].order.food == b.spr) {
-                        let tile = getMapTile(map_item, npcs[i].front[0], npcs[i].front[1]);
+            let npc = npcs[i];
+            let belt_id = npc.front;
 
-                        let table = tables[npcs[i].seat_num];
-                        table.people_served++;
+            if (npc.table_seat) { belt_id = npc.belt; }
 
-                        npcs[i].served = true;
-                        npcs[i].sitting = false;
-
-                        let table_item = items[getItemKey(tile.x, tile.y)];
-                        if (table_item !== -1) { // throw away anything sitting on the table if served
-                            removeItem(table_item);
-                        }
-
-                        addItem(b.spr, tile, -1);
-
-                        let spot = item_tiles[getItemKey(b.x, b.y)];
-                        removeItem(spot, b.x, b.y);
-
-                        b = -1; // no double orders for the table
-                    }
-                }
-            }
-            else if (npcs[i].sitting && !npcs[i].served) { // SINGLE SEAT
-                if (npcs[i].front == bid) {
-                    if (npcs[i].order.food == b.spr) {
-                        npcs[i].served = true;
-                        npcs[i].sitting = false;
-                        
+            if (belt_id == bid) {
+                if (npc.sitting && !npc.served && npc.order.food == b.spr) {
+                    npc.served = true;
+                    npc.sitting = false;
+                    
+                    if (!npc.table_seat) {
                         let spot = item_tiles[getItemKey(b.x, b.y)];
                         removeItem(spot, b.x, b.y);
                         b = -1;
 
-                        addItem(score.money, item_tiles[bid], npcs[i].order.pay);
+                        addItem(score.money, item_tiles[bid], npc.order.pay);
 
                         b = items[getItemKey(b.x, b.y)];
-                        single_seats[npcs[i].seat_num].full = false;
-                        open_single_seats.push(npcs[i].seat_num);
+                        open_single_seats.push(npc.seat_num);
+                    }
+                    else {
+                        let tile = getMapTile(map_item, npc.front[0], npc.front[1]);
+
+                        let table = tables[npc.seat_num];
+                        table.people_served++;
+    
+                        let table_item = items[getItemKey(tile.x, tile.y)];
+                        if (table_item !== -1) { removeItem(table_item); } // remove items on table before serving
+    
+                        addItem(b.spr, tile, -1);
+    
+                        let spot = item_tiles[getItemKey(b.x, b.y)];
+                        removeItem(spot, b.x, b.y);
+    
+                        b = -1; // no double orders for the table
                     }
                 }
             }

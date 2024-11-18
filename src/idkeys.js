@@ -84,7 +84,6 @@ export const spots = {
     "item_spot": 7,
     "storage": 8,
     "fryer": 23,
-    // "seat": 34,
     "stove": 22,
     "trashcan": 21,
     "sink": 38,
@@ -92,9 +91,15 @@ export const spots = {
     "side_counter": 151, // not part of the arrows
     "belt_table": 55,  // not part of the arrows
     "belt_outer_table": 53,  // not part of the arrows
-
 };
 
+export const npc_spots = {
+    "seat": 34,
+    "walk": 23,
+    "spawnable": 22,
+    "belt": 37,
+    "table":7,
+};
 
 export const storage_type = {
 	"liquid": 82,
@@ -198,14 +203,6 @@ export const npc_list = [
     158,
     159,
 ];
-
-export const npc_spots = {
-    "seat": 34,
-    "walk": 23,
-    "spawnable": 22,
-    "belt": 37,
-    "table":7,
-};
 
 export const food_orders = [
     item_key.apple_plate,
