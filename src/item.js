@@ -43,12 +43,8 @@ function clearItemMaps() {
 	clearMap(map_floor_item);
 }
 
-export function addItem(item_spr, spot, score) {
-	if (spot == undefined) {
-		return;
-	}
-
-	let item = {
+function Item(item_spr) {
+	return {
 		"name": key_name[item_spr],
 		"spr": item_spr,
 		"current_tile": -1,
@@ -59,6 +55,14 @@ export function addItem(item_spr, spot, score) {
 		"type": "",
 		"subtype": "",
 	};
+}
+
+export function addItem(item_spr, spot, score) {
+	if (spot == undefined) {
+		return;
+	}
+
+	let item = Item(item_spr);
 
 	if (spot !== -1) {
 		item.current_tile = getItemKey(spot.x, spot.y);

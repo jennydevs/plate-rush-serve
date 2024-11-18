@@ -1,4 +1,4 @@
-import { getMapTile, map_logic} from "./map.js";
+import { getMapTile, map_logic } from "./map.js";
 import { direction, spots } from "./idkeys.js";
 import { checkCanPlace, checkCanPickUp, items, item_tiles, getItemKey, removeItem, placeItem, spawnBeltItems } from "./item.js";
 import { npcCheck } from "./npc.js";
@@ -113,13 +113,13 @@ export function beltMoveItems() {
         return;
     }
 
-    // b_items = npcCheck(b_items); 
+    b_items = npcCheck(b_items); 
 
     if (current_timer >= max_belt_timer) {
         let moved_items = {};
 
         for (const [key, b] of Object.entries(b_items)) {
-            if (items[key] !== undefined && items[key] !== -1) {
+            if (items[key] !== undefined && items[key] !== -1) { // work on this
                 if (checkCanPickUp(item_tiles[key])) {
                     removeItem(item_tiles[key], items[key].x, items[key].y);
 

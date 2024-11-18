@@ -34,8 +34,8 @@ exports.update = function () {
             }
 
             beltMoveItems();
-            // addNPC();
-            // updateNPC();
+            addNPC();
+            updateNPC();
 
             drawMap();
             drawBottomItems();
