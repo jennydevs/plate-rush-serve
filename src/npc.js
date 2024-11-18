@@ -1,7 +1,6 @@
 import { npc_spots, npc_list, direction, drink_orders, food_orders, score, item_scores } from "./idkeys.js";
 import { getMapTile, map_item, map_npc, map_furniture } from "./map.js";
 import { addItem, removeItem, item_tiles, items, getItemKey} from "./item.js";
-import { belts } from "./belt.js";
 
 let npcs = [];
 const seats = [];
@@ -30,6 +29,114 @@ export function setUpNPC() {
     createNPC();
     createNPC();
     createNPC();
+}
+
+function NPC(spr, move_timer) {
+    const random_spawn = random(spawn_area.length);
+
+    return {
+        "spr": spr == -1? npc_list[random(npc_list.length)] : spr,
+        "order": -1,
+        "pay": 0,
+        "seat_num": -1,
+        "dx": -8,
+        "dy": -8,
+        "dir": -1,
+        "x": spawn_area[random_spawn].x,
+        "y": spawn_area[random_spawn].y,
+        "front": -1,
+        "sitting": false,
+        "served": false,
+        "walk_id": -1,
+        "timer": move_timer,
+        "current_timer": 0,
+        "prev_path": [[-1, -1]], // one spot buffer don't disappear one spot early when leaving
+        "walk_dir": -1,
+        "table_seat": false,
+        "current_prev_path": 0,
+    };
+}
+
+export function addNPC() {
+    if (spawn_current_timer >= spawn_timer){
+        createNPC();
+        spawn_current_timer = 0;
+    }
+    else { spawn_current_timer++; }
+}
+
+function createNPC() {
+    if (open_single_seats.length == 0 
+        && open_table_seats.length == 0) {
+        return;
+    }
+
+    const coin_flip = 2;
+    const dining_type = random(coin_flip); // 0 for single, 1 for table 
+
+    let random_seating = -1;
+    let seating_id = -1;
+    let seating = -1;
+    let npc_amt = 0;
+    let timer = 30;
+    let table_seat = false;
+
+    if (dining_type == 0 
+        && open_single_seats.length != 0) {
+            random_seating = random(open_single_seats.length);
+            seating_id = open_single_seats[random_seating];
+            seating = single_seats[seating_id];
+            npc_amt = 1;
+    }
+    else if (dining_type == 1 
+        && open_table_seats.length != 0) {
+            random_seating = random(open_table_seats.length);
+            seating_id = open_table_seats[random_seating];
+            seating = tables[seating_id];
+
+            let seat_count = seating.group.seating_group.length;
+            npc_amt = Math.floor(Math.random() * ((seat_count + 1) - 2) + 2); // hmm
+
+            if (npc_amt > seat_count) { npc_amt = seat_count; }
+
+            seating.current_people = npc_amt;
+            seating.people_served = 0;
+
+            table_seat = true;
+    }
+
+    for (let i = 0; i < npc_amt; i++) {
+        let npc = NPC(-1, timer);
+        npc.seat_num = seating_id;
+        if (!table_seat) {
+            npc.dx = seating.x;
+            npc.dy = seating.y;
+            npc.dir = seating.dir;
+            npc.front = seating.bid;
+            npc.table_seat = false;
+        }
+        else {
+            npc.dx = seating.group.seating_group[i].chair[0];
+            npc.dy = seating.group.seating_group[i].chair[1];
+            npc.dir = seating.group.seating_group[i].chair[2];
+            npc.front = seating.group.seating_group[i].table;
+            npc.table_seat = true;
+
+            npc.belt = seating.bid;
+
+            timer += 5;
+        }
+    
+        npc.order = orderItem();
+        npcs.push(npc);
+    }
+
+    if (!table_seat) {
+        open_single_seats.splice(random_seating, 1);
+    } 
+    else {
+        open_table_seats.splice(random_seating, 1);
+    }
 }
 
 export function updateNPC() {
@@ -66,7 +173,7 @@ export function updateNPC() {
                 }
             }
             else if (!npc.sitting) { // move towards their seat
-                if (npc.prev_path.length == 1) { // just spawned, changed from 0 to 1
+                if (npc.prev_path.length == 1) { // just spawned
                     // npcs[i].x !== npcs[i].dx && npcs[i].y !== npcs[i].dy
                     let x_check = npc.dx - npc.x; // redo this
 
@@ -272,8 +379,8 @@ function setUpWalkSpace() {
     let tile = getMapTile(map_npc, walk_space.x, walk_space.y);
 
     let result = getWalkSpaceDir(tile);
-    walk_space.dir = result[0];
-    walk_space.npc_look = result[1];
+    walk_space.dir = result.dir;
+    walk_space.npc_look = result.npc_look;
 
     for (let i = 1; i < walk_counter; i++) {
         tile = getNextWalkSpace(walk_space);
@@ -294,8 +401,8 @@ function setUpWalkSpace() {
 
         result = getWalkSpaceDir(tile);
 
-        tile_spot.dir = result[0];
-        tile_spot.npc_look = result[1];
+        tile_spot.dir = result.dir;
+        tile_spot.npc_look = result.npc_look;
         tile_spot.id = i;
 
         walk_space = tile_spot;
@@ -319,24 +426,19 @@ function getWalkSpaceDir(walk_space) {
     const fR = walk_space.flipR;
 
     if (fH && fV && fR) {
-        let npc_look = direction.down;
-        return [direction.right, npc_look];
+        return {"dir": direction.right, "npc_look": direction.down};
     }
-
     if (!fH && !fV && !fR) {
-        let npc_look = direction.left;
-        return [direction.down, npc_look];
+        return {"dir": direction.down, "npc_look": direction.left};
     }
-
     if (!fH && !fV && fR) {
-        let npc_look = direction.up;
-        return [direction.left, npc_look];
+        return {"dir": direction.left, "npc_look": direction.up};
+    }
+    if (fH && fV && !fR) {
+        return {"dir": direction.up, "npc_look": direction.right};
     }
 
-    if (fH && fV && !fR) {
-        let npc_look = direction.right;
-        return [direction.up, npc_look];
-    }
+    return -1;
 }
 
 function getNextWalkSpace(walk_space) {
@@ -566,80 +668,6 @@ function orderItem() {
     return {"pay": item_scores[order_menu_item], "food": order_menu_item}
 }
 
-function createNPC() {
-    if (open_single_seats.length == 0 
-        && open_table_seats.length == 0) {
-        return;
-    }
-
-    const coin_flip = 2;
-    const dining_type = random(coin_flip); // 0 for single, 1 for table 
-
-    let random_seating = -1;
-    let seating_id = -1;
-    let seating = -1;
-    let npc_amt = 0;
-    let timer = 30;
-    let table_seat = false;
-
-    if (dining_type == 0 
-        && open_single_seats.length != 0) {
-            random_seating = random(open_single_seats.length);
-            seating_id = open_single_seats[random_seating];
-            seating = single_seats[seating_id];
-            npc_amt = 1;
-    }
-    else if (dining_type == 1 
-        && open_table_seats.length != 0) {
-            random_seating = random(open_table_seats.length);
-            seating_id = open_table_seats[random_seating];
-            seating = tables[seating_id];
-
-            let seat_count = seating.group.seating_group.length;
-            npc_amt = Math.floor(Math.random() * ((seat_count + 1) - 2) + 2); // hmm
-
-            if (npc_amt > seat_count) { npc_amt = seat_count; }
-
-            seating.current_people = npc_amt;
-            seating.people_served = 0;
-
-            table_seat = true;
-    }
-
-    for (let i = 0; i < npc_amt; i++) {
-        let npc = NPC(-1, timer);
-        npc.seat_num = seating_id;
-        if (!table_seat) {
-            npc.dx = seating.x;
-            npc.dy = seating.y;
-            npc.dir = seating.dir;
-            npc.front = seating.bid;
-            npc.table_seat = false;
-        }
-        else {
-            npc.dx = seating.group.seating_group[i].chair[0];
-            npc.dy = seating.group.seating_group[i].chair[1];
-            npc.dir = seating.group.seating_group[i].chair[2];
-            npc.front = seating.group.seating_group[i].table;
-            npc.table_seat = true;
-
-            npc.belt = seating.bid;
-
-            timer += 5;
-        }
-    
-        npc.order = orderItem();
-        npcs.push(npc);
-    }
-
-    if (!table_seat) {
-        open_single_seats.splice(random_seating, 1);
-    } 
-    else {
-        open_table_seats.splice(random_seating, 1);
-    }
-}
-
 
 export function drawNPC()  {
     for (let i = npcs.length - 1; i >= 0; i--) {
@@ -732,13 +760,7 @@ export function npcCheck(belt_items) {
     return belt_items;
 }
 
-export function addNPC() {
-    if (spawn_current_timer >= spawn_timer){
-        createNPC();
-        spawn_current_timer = 0;
-    }
-    else { spawn_current_timer++; }
-}
+
 
 export function resetNPCS() {
     npcs = [];
@@ -762,31 +784,4 @@ export function resetNPCS() {
     createNPC();
     createNPC();
     createNPC();
-}
-
-
-function NPC(spr, move_timer) {
-    const random_spawn = random(spawn_area.length);
-
-    return {
-        "spr": spr == -1? npc_list[random(npc_list.length)] : spr,
-        "order": -1,
-        "pay": 0,
-        "seat_num": -1,
-        "dx": -8,
-        "dy": -8,
-        "dir": -1,
-        "x": spawn_area[random_spawn].x,
-        "y": spawn_area[random_spawn].y,
-        "front": -1,
-        "sitting": false,
-        "served": false,
-        "walk_id": -1,
-        "timer": move_timer,
-        "current_timer": 0,
-        "prev_path": [[-1, -1]], // one spot buffer don't disappear one spot early when leaving
-        "walk_dir": -1,
-        "table_seat": false,
-        "current_prev_path": 0,
-    };
 }
