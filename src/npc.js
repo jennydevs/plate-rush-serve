@@ -34,268 +34,145 @@ export function setUpNPC() {
 
 export function updateNPC() {
     for (let i = 0; i < npcs.length; i++){
-        if (npcs[i].current_timer >= npcs[i].timer) { 
-            if (!npcs[i].sitting) {
-                if (npcs[i].table_seat && npcs[i].served) {
-                    let table = tables[npcs[i].seat_num];
-                    if (table.people_served == table.current_people) { // confirm all were served
-                        npcs[i].table_seat = false;
-                        table.current_people--; // remove one by one
-                        table.people_served--;// maybe clear table and just put money in one corner
+        let npc = npcs[i];
 
-                        let tile = getMapTile(map_item, npcs[i].front[0], npcs[i].front[1]);
-                        removeItem(item_tiles[getItemKey(npcs[i].front[0], npcs[i].front[1])],npcs[i].front[0], npcs[i].front[1]);
-                        addItem(score.money, item_tiles[getItemKey(tile.x, tile.y)], npcs[i].order.pay);
+        if (npc.current_timer >= npc.timer) { 
+            if (npc.served && !npc.sitting) {
+                if (npc.table_seat) {
+                    let table = tables[npc.seat_num];
+                    if (table.people_served == table.current_people) { // confirm served, remove from the table, prepare to leave
+                        npc.table_seat = false;
+                        table.current_people--;
+                        table.people_served--;
+
+                        let tile = getMapTile(map_item, npc.front[0], npc.front[1]);
+                        removeItem(item_tiles[getItemKey(npc.front[0], npc.front[1])],npc.front[0], npc.front[1]);
+                        addItem(score.money, item_tiles[getItemKey(tile.x, tile.y)], npc.order.pay);
 
                         if (table.current_people == 0) {
                             table.full = false;
-                            open_table_seats.push(npcs[i].seat_num);
+                            open_table_seats.push(npc.seat_num);
                         }
                     }
                 }
-                else if (npcs[i].served) { // they go home
-                    npcs[i].x = npcs[i].prev_path[npcs[i].current_prev_path][0];
-                    npcs[i].y = npcs[i].prev_path[npcs[i].current_prev_path][1];
+                else { // going home
+                    npc.x = npc.prev_path[npc.current_prev_path][0];
+                    npc.y = npc.prev_path[npc.current_prev_path][1];
 
-                    npcs[i].current_prev_path--;
+                    npc.current_prev_path--;
 
-                    if (npcs[i].current_prev_path < 0) {
-                        npcs.splice(i, 1);
-                    } else {
-                        npcs[i].current_timer = 0;
+                    if (npc.current_prev_path < 0) { npcs.splice(i, 1); } 
+                    else { npc.current_timer = 0; }
+                }
+            }
+            else if (!npc.sitting) { // move towards their seat
+                if (npc.prev_path.length == 1) { // just spawned, changed from 0 to 1
+                    // npcs[i].x !== npcs[i].dx && npcs[i].y !== npcs[i].dy
+                    let x_check = npc.dx - npc.x; // redo this
+
+                    // let y_check = npcs[i].dy - npcs[i].y; //use y
+                    // let y_check = npcs[i].dy - npcs[i].dx; // if some amount move upwards, or move downwards
+
+                    npc.prev_path.push([npc.x, npc.y]);
+
+                    if (x_check >= 0) { 
+                        npc.x++; 
+                        npc.spawn_dir = direction.left;
+                    } // on the left side move to the right
+                    else { 
+                        npc.x--; 
+                        npc.spawn_dir = direction.right;
+                    }
+
+                    npc.prev_path.push([npc.x, npc.y]);
+                    npc.walk_id = getMapTile(map_npc, npc.x, npc.y).id;
+
+                    let result = confirmSeating(walkable[npc.walk_id].npc_look, npc.x, npc.y, npc.dx, npc.dy, npc.table_seat, npc.seat_num);
+
+                    if (result[0] !== -1) { 
+                        if (!npc.table_seat) {
+                            npc.x = result[0];
+                            npc.y = result[1];
+                        }
+                        else {
+                            npc.x = npc.dx;
+                            npc.y = npc.dy;
+                        }
+
+                        npc.prev_path.push([npc.x, npc.y]);
+                        npc.sitting = true;
+                        npc.current_prev_path = npc.prev_path.length - 1;
+                    } 
+                    else {
+                        let walk = npc.walk_id;
+                        let next_spot = walkable[walk].nid;
+                        let next_next_spot = walkable[next_spot].nid; // 2 spots left
+                        let left = walkable[next_next_spot];
+
+                        let prev_spot = walkable[walk].pid;
+                        let prev_prev_spot = walkable[prev_spot].pid;
+                        let right = walkable[prev_prev_spot];
+
+                        let left_result = Math.sqrt(Math.pow((npc.dx - left.x), 2) + Math.pow((npc.dy - left.y), 2));
+                        let right_result = Math.sqrt(Math.pow((npc.dx - right.x), 2) + Math.pow((npc.dy - right.y), 2));
+
+                        if (x_check >= 0) {
+                            if (left_result > right_result) { npc.walk_dir = direction.left; }
+                            else { npc.walk_dir = direction.right; }
+                        }
+                        else {
+                            if (left_result < right_result) { npc.walk_dir = direction.left; }
+                            else { npc.walk_dir = direction.right; }
+                        }
                     }
                 }
                 else {
-                    // npcs[i].x !== npcs[i].dx && npcs[i].y !== npcs[i].dy
-                    if (npcs[i].prev_path.length == 1) { // just spawned // changed from 0 to 1
-                        let x_check = npcs[i].dx - npcs[i].x; // redo this
-                        // let y_check = npcs[i].dy - npcs[i].y; //use y
+                    let walk = walkable[npc.walk_id];
 
-
-                        // let y_check = npcs[i].dy - npcs[i].dx; // if some amount move upwards, or move downwards
-
-                        if (x_check >= 0) { // on the left move to the right
-                            npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                            npcs[i].x++;
-                            npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                            npcs[i].walk_id = getMapTile(map_npc, npcs[i].x, npcs[i].y).id;
-
-                            let result = confirmSeating(walkable[npcs[i].walk_id].npc_look, npcs[i].x, npcs[i].y, npcs[i].dx, npcs[i].dy, npcs[i].table_seat, npcs[i].seat_num);
-                            
-                            if (result[0] !== -1) { 
-                                if (!npcs[i].table_seat) {
-                                    npcs[i].x = result[0];
-                                    npcs[i].y = result[1];
-                                    npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                                    npcs[i].sitting = true;
-                                    npcs[i].current_prev_path = npcs[i].prev_path.length - 1;
-                                }
-                                else {
-                                    npcs[i].x = npcs[i].dx;
-                                    npcs[i].y = npcs[i].dy;
-                                    npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                                    npcs[i].sitting = true;
-                                    npcs[i].current_prev_path = npcs[i].prev_path.length - 1;
-                                }
-                            } 
-                            else {
-                                let walk = npcs[i].walk_id;
-                                let next_spot = walkable[walk].nid;
-                                let next_next_spot = walkable[next_spot].nid; // 2 spots left
-                                let left = walkable[next_next_spot];
-
-                                let prev_spot = walkable[walk].pid;
-                                let prev_prev_spot = walkable[prev_spot].pid;
-                                let right = walkable[prev_prev_spot];
-
-                                let left_result = Math.sqrt(Math.pow((npcs[i].dx - left.x), 2) + Math.pow((npcs[i].dy - left.y), 2));
-
-                                let right_result = Math.sqrt(Math.pow((npcs[i].dx - right.x), 2) + Math.pow((npcs[i].dy - right.y), 2));
-                                if (left_result > right_result) { // flipped it for the left side
-                                    npcs[i].walk_dir = direction.left;
-                                }
-                                else {
-                                    npcs[i].walk_dir = direction.right;
-                                }
-
-                                npcs[i].spawn_dir = direction.left;
-                            } 
+                    if (npc.spawn_dir == direction.right) { 
+                        if (npc.walk_dir == direction.right) {
+                            npc.walk_id = walk.pid; 
                         }
-                        else { // on the right move to the left
-                            npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                            npcs[i].x--;
-                            npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                            npcs[i].walk_id = getMapTile(map_npc, npcs[i].x, npcs[i].y).id;
-
-                            let result = confirmSeating(walkable[npcs[i].walk_id].npc_look, npcs[i].x, npcs[i].y, npcs[i].dx, npcs[i].dy, npcs[i].table_seat, npcs[i].seat_num);
-
-                            if (result[0] !== -1) { 
-                                if (!npcs[i].table_seat) {
-                                    npcs[i].x = result[0];
-                                    npcs[i].y = result[1];
-                                    npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                                    npcs[i].sitting = true;
-                                    npcs[i].current_prev_path = npcs[i].prev_path.length - 1;
-                                }
-                                else {
-                                    npcs[i].x = npcs[i].dx;
-                                    npcs[i].y = npcs[i].dy;
-                                    npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                                    npcs[i].sitting = true;
-                                    npcs[i].current_prev_path = npcs[i].prev_path.length - 1;
-                                }
-                            } 
-                            else {
-                                let walk = npcs[i].walk_id;
-                                let next_spot = walkable[walk].nid;
-                                let next_next_spot = walkable[next_spot].nid; // 2 spots left
-                                let left = walkable[next_next_spot];
-        
-                                let prev_spot = walkable[walk].pid;
-                                let prev_prev_spot = walkable[prev_spot].pid;
-                                let right = walkable[prev_prev_spot];
-        
-                                let left_result = Math.sqrt(Math.pow((npcs[i].dx - left.x), 2) + Math.pow((npcs[i].dy - left.y), 2));
-        
-                                let right_result = Math.sqrt(Math.pow((npcs[i].dx - right.x), 2) + Math.pow((npcs[i].dy - right.y), 2));
-                                if (left_result < right_result) {
-                                    npcs[i].walk_dir = direction.left;
-                                }
-                                else {
-                                    npcs[i].walk_dir = direction.right;
-                                }
-        
-                                npcs[i].spawn_dir = direction.right;
-                            }
-                        }
-                    } else {
-                        if (!npcs[i].sitting) {
-                            if (npcs[i].walk_dir == direction.right) {
-                                if (npcs[i].spawn_dir == direction.right) {
-                                    let walk = walkable[npcs[i].walk_id];
-                                    npcs[i].walk_id = walk.pid;
-                                    let walk_forward = walkable[npcs[i].walk_id];
-                                    npcs[i].x = walk_forward.x;
-                                    npcs[i].y = walk_forward.y;
-                                    npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-
-                                    let result = confirmSeating(walk_forward.npc_look, npcs[i].x, npcs[i].y, npcs[i].dx, npcs[i].dy, npcs[i].table_seat, npcs[i].seat_num);
-
-                                    if (result[0] !== -1) {
-                                        if (!npcs[i].table_seat) {
-                                            npcs[i].x = result[0];
-                                            npcs[i].y = result[1];
-                                            npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                                            npcs[i].sitting = true;
-                                            npcs[i].current_prev_path = npcs[i].prev_path.length - 1;
-                                        }
-                                        else {
-                                            npcs[i].x = npcs[i].dx;
-                                            npcs[i].y = npcs[i].dy;
-                                            npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                                            npcs[i].sitting = true;
-                                            npcs[i].current_prev_path = npcs[i].prev_path.length - 1;
-                                        }
-                                    }
-                                }
-
-                                else if (npcs[i].spawn_dir == direction.left) {
-                                    let walk = walkable[npcs[i].walk_id];
-                                    npcs[i].walk_id = walk.nid;
-                                    let walk_forward = walkable[npcs[i].walk_id];
-                                    npcs[i].x = walk_forward.x;
-                                    npcs[i].y = walk_forward.y;
-                                    npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-
-                                    let result = confirmSeating(walk_forward.npc_look, npcs[i].x, npcs[i].y, npcs[i].dx, npcs[i].dy, npcs[i].table_seat, npcs[i].seat_num);
-
-                                    if (result[0] !== -1) {
-                                        if (!npcs[i].table_seat) {
-                                            npcs[i].x = result[0];
-                                            npcs[i].y = result[1];
-                                            npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                                            npcs[i].sitting = true;
-                                            npcs[i].current_prev_path = npcs[i].prev_path.length  -1;
-                                        }
-                                        else {
-                                            npcs[i].x = npcs[i].dx;
-                                            npcs[i].y = npcs[i].dy;
-                                            npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                                            npcs[i].sitting = true;
-                                            npcs[i].current_prev_path = npcs[i].prev_path.length - 1;
-                                        }
-                                        
-                                    }
-                                }
-                            }
-                            else if (npcs[i].walk_dir == direction.left) {
-                                if (npcs[i].spawn_dir == direction.right) {
-                                    let walk = walkable[npcs[i].walk_id];
-                                    npcs[i].walk_id = walk.nid;
-                                    let walk_forward = walkable[npcs[i].walk_id];
-                                    npcs[i].x = walk_forward.x;
-                                    npcs[i].y = walk_forward.y;
-                                    npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-
-                                    let result = confirmSeating(walk_forward.npc_look, npcs[i].x, npcs[i].y, npcs[i].dx, npcs[i].dy, npcs[i].table_seat, npcs[i].seat_num);
-
-                                    if (result[0] !== -1) {
-                                        if (!npcs[i].table_seat) {
-                                            npcs[i].x = result[0];
-                                            npcs[i].y = result[1];
-                                            npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                                            npcs[i].sitting = true;
-                                            npcs[i].current_prev_path = npcs[i].prev_path.length - 1;
-                                        }
-                                        else {
-                                            npcs[i].x = npcs[i].dx;
-                                            npcs[i].y = npcs[i].dy;
-                                            npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                                            npcs[i].sitting = true;
-                                            npcs[i].current_prev_path = npcs[i].prev_path.length -1;
-                                        }
-                                    }
-                                }
-                                else if (npcs[i].spawn_dir == direction.left) {
-                                    let walk = walkable[npcs[i].walk_id];
-                                    npcs[i].walk_id = walk.pid;
-                                    let walk_forward = walkable[npcs[i].walk_id];
-                                    npcs[i].x = walk_forward.x;
-                                    npcs[i].y = walk_forward.y;
-                                    npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-
-                                    let result = confirmSeating(walk_forward.npc_look, npcs[i].x, npcs[i].y, npcs[i].dx, npcs[i].dy, npcs[i].table_seat, npcs[i].seat_num);
-
-                                    if (result[0] !== -1) {
-                                        if (!npcs[i].table_seat) {
-                                            npcs[i].x = result[0];
-                                            npcs[i].y = result[1];
-                                            npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                                            npcs[i].sitting = true;
-                                            npcs[i].current_prev_path = npcs[i].prev_path.length - 1;
-                                        }
-                                        else {
-                                            npcs[i].x = npcs[i].dx;
-                                            npcs[i].y = npcs[i].dy;
-                                            npcs[i].prev_path.push([npcs[i].x, npcs[i].y]);
-                                            npcs[i].sitting = true;
-                                            npcs[i].current_prev_path = npcs[i].prev_path.length - 1;
-                                        }
-                                    }
-
-                                    
-                                }
-                            }
+                        else if (npc.walk_dir == direction.left) {
+                            npc.walk_id = walk.nid; 
                         }
                     }
-                    npcs[i].current_timer = 0;
+                    else if (npc.spawn_dir == direction.left) { 
+                        if (npc.walk_dir == direction.right) {
+                            npc.walk_id = walk.nid; 
+                        }
+                        else if (npc.walk_dir == direction.left) {
+                            npc.walk_id = walk.pid;
+                        }
+                    }
+
+                    let walk_forward = walkable[npc.walk_id];
+                    npc.x = walk_forward.x;
+                    npc.y = walk_forward.y;
+                    npc.prev_path.push([npc.x, npc.y]);
+
+                    let result = confirmSeating(walk_forward.npc_look, npc.x, npc.y, npc.dx, npc.dy, npc.table_seat, npc.seat_num);
+
+                    if (result[0] !== -1) {
+                        if (!npc.table_seat) {
+                            npc.x = result[0];
+                            npc.y = result[1];
+                        }
+                        else {
+                            npc.x = npc.dx;
+                            npc.y = npc.dy;
+                        }
+
+                        npc.prev_path.push([npc.x, npc.y]);
+                        npc.sitting = true;
+                        npc.current_prev_path = npc.prev_path.length - 1;
+                    }
                 }
 
-                // npcs[i].current_timer = 0;
+                npc.current_timer = 0;
             }
-        } else {
-            npcs[i].current_timer++; // for moving
-        }
+        } 
+        else { npc.current_timer++; } // for moving
     }
 }
 
@@ -311,27 +188,19 @@ function confirmSeating(dir, nx, ny, dx, dy, table_seat, seat_num) {
 
     if (dir == direction.left) {
         if (nx - 1 == mx && ny == my) { return [nx - 1, ny]; }
-        if (table_seat) {
-            if (nx - 2 == mx && ny == my) { return [nx - 2, ny]; }
-        }
+        if (table_seat && nx - 2 == mx && ny == my) { return [nx - 2, ny]; }
     }
     else if (dir == direction.right) {
         if (nx + 1 == mx && ny == my) { return [nx + 1, ny]; }
-        if (table_seat) {
-            if (nx + 2 == mx && ny == my) { return [nx + 2, ny]; }
-        }
+        if (table_seat && nx + 2 == mx && ny == my) { return [nx + 2, ny]; }
     }
     else if (dir == direction.up) {
         if (nx == mx && ny - 1 == my) { return [nx, ny - 1]; }
-        if (table_seat) {
-            if (nx == mx && ny - 2 == my) { return [nx, ny - 2]; }
-        }
+        if (table_seat && nx == mx && ny - 2 == my) { return [nx, ny - 2]; }
     }
     else if (dir == direction.down) {
         if (nx == mx && ny + 1 == my) { return [nx, ny + 1]; }
-        if (table_seat) {
-            if (nx == mx && ny + 2 == my) { return [nx, ny + 2]; }
-        }
+        if (table_seat && nx == mx && ny + 2 == my) { return [nx, ny + 2]; }
     }
 
     return [-1, -1];
@@ -450,27 +319,23 @@ function getWalkSpaceDir(walk_space) {
     const fR = walk_space.flipR;
 
     if (fH && fV && fR) {
-        let dir = direction.right;
         let npc_look = direction.down;
-        return [dir, npc_look];
+        return [direction.right, npc_look];
     }
 
     if (!fH && !fV && !fR) {
-        let dir  = direction.down;
         let npc_look = direction.left;
-        return [dir, npc_look];
+        return [direction.down, npc_look];
     }
 
     if (!fH && !fV && fR) {
-        let dir = direction.left;
         let npc_look = direction.up;
-        return [dir, npc_look];
+        return [direction.left, npc_look];
     }
 
     if (fH && fV && !fR) {
-        let dir = direction.up;
         let npc_look = direction.right;
-        return [dir, npc_look];
+        return [direction.up, npc_look];
     }
 }
 
@@ -872,9 +737,7 @@ export function addNPC() {
         createNPC();
         spawn_current_timer = 0;
     }
-    else {
-        spawn_current_timer++;
-    }
+    else { spawn_current_timer++; }
 }
 
 export function resetNPCS() {
