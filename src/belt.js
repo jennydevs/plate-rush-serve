@@ -121,7 +121,7 @@ export function beltMoveItems() {
         for (const [key, b] of Object.entries(b_items)) {
             if (items[key] !== undefined && items[key] !== -1) { // work on this
                 if (checkCanPickUp(item_tiles[key])) {
-                    removeItem(item_tiles[key], items[key].x, items[key].y);
+                    removeItem(items[key].x, items[key].y);
 
                     const belt = belts[b.current_tile];
                     b.x = belt.nx;
@@ -161,7 +161,7 @@ export function resetBelts() {
     }
 
     for (const [key, b] of Object.entries(b_items)) {
-        removeItem(item_tiles[key], items[key].x, items[key].y);
+        removeItem(items[key].x, items[key].y);
     }
 
     spawnBeltItems();

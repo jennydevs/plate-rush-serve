@@ -1,6 +1,6 @@
 import { npc_spots, npc_list, direction, drink_orders, food_orders, score, item_scores } from "./idkeys.js";
 import { getMapTile, map_item, map_npc, map_furniture } from "./map.js";
-import { addItem, removeItem, item_tiles, items, getItemKey} from "./item.js";
+import { checkCanPickUp, addItem, removeItem, item_tiles, items, getItemKey, resetSpot } from "./item.js";
 
 let npcs = [];
 const seats = [];
@@ -727,9 +727,10 @@ export function npcCheck(belt_items) {
                     npc.sitting = false;
                     
                     if (!npc.table_seat) {
-                        let spot = item_tiles[getItemKey(b.x, b.y)];
-                        removeItem(spot, b.x, b.y);
-                        b = -1;
+                        if (checkCanPickUp(item_tiles[getItemKey(b.x, b.y)])) {
+                            removeItem(b.x, b.y);
+                            b = -1;
+                        };
 
                         addItem(score.money, item_tiles[bid], npc.order.pay);
 
@@ -743,12 +744,13 @@ export function npcCheck(belt_items) {
                         table.people_served++;
     
                         let table_item = items[getItemKey(tile.x, tile.y)];
-                        if (table_item !== -1) { removeItem(table_item); } // remove items on table before serving
+                        if (table_item !== undefined || table_item !== -1) { removeItem(table_item); } // remove items on table before serving
     
                         addItem(b.spr, tile, -1);
-    
-                        let spot = item_tiles[getItemKey(b.x, b.y)];
-                        removeItem(spot, b.x, b.y);
+
+                        if (checkCanPickUp(item_tiles[getItemKey(b.x, b.y)])) {
+                            removeItem(b.x, b.y);
+                        }
     
                         b = -1; // no double orders for the table
                     }

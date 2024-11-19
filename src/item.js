@@ -315,7 +315,7 @@ function pickUpItem(spot) {
 		return addItem(item_key["plate"], -1, -1);
 	}
 
-	removeItem(spot, front_item.x, front_item.y);
+	removeItem(front_item.x, front_item.y);
 
 	front_item.current_tile = -1;
 	front_item.tile_type = -1;
@@ -498,10 +498,15 @@ export function getItem(x, y) {
 	return items[getItemKey(x, y)];
 }
 
-export function removeItem(spot, x, y) {
-	// getMapTile(map_item, x, y).full = false;
+export function removeItem(x, y) {
+	let key = getItemKey(x, y);
+	let tile = item_tiles[key];
 
-	removeItemFromMap(spot.is_counter, spot.x, spot.y);
+	if (tile == undefined || tile == -1) {
+		return;
+	}
+
+	removeItemFromMap(tile.is_counter, tile.x, tile.y);
 	items[getItemKey(x, y)] = -1;
 	item_tiles[getItemKey(x, y)].full = false;
 }
