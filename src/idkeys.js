@@ -254,3 +254,32 @@ item_scores[item_key.tea] = 1;
 export const score = {
     "money": 154,
 };
+
+export const menu_options = [
+    "Game Type",
+    "Character Select",
+];
+
+export const game_type_options = [
+    "Singleplayer",
+    "Multiplayer VS",
+    // "Multiplayer CO-OP",
+];
+
+
+export let character_list = [
+    126,
+    127,
+    13,
+    14,
+    // 94,
+    // 124,
+    // 157,
+    236,
+];
+
+export function addCharacters() {
+    for (let i = 0; i < npc_list.length; i++) {
+        character_list.push(npc_list[i]);
+    }
+}

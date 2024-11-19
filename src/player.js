@@ -1,12 +1,19 @@
 import { getTile, getMapTile, map_solid, map_item, map_furniture } from "./map.js";
 import { interactFront, checkStorage, moveStorageSelection, grabStorageItem, cookTheItems, leaveStorage, drawRecipe, drawItemsInContainer, moveBookSelection, getItemKey} from "./item.js";
 import { spots, direction } from "./idkeys.js";
+import { drawRect } from "./menu.js";
 
-export const platers = {};
+let singleplater = true;
 
-export function setUpPlaters() {
-    platers[0] = Plater(0, 127, 50, 60, 106, 1, 0);
-    platers[1] = Plater(1, 111, 70, 60, 106, 2, 0);
+export let platers = {};
+
+export function setUpPlaters(spr_1, spr_2) {
+    platers[0] = Plater(0, spr_1, 50, 60, 106, 2, 0);
+
+    if (spr_2 !== -1) {
+        platers[1] = Plater(1, spr_2, 70, 60, 106, 1, 0);
+        singleplater = false;
+    }
 }
 
 function Plater(id, spr, x, y, front_spr, control_type, high_score) {
@@ -14,6 +21,8 @@ function Plater(id, spr, x, y, front_spr, control_type, high_score) {
         "id": id,
         "px": x,
         "py": y,
+        "start_x": x,
+        "start_y": y,
         "w": 4,
         "h": 8,
         "spr": spr,
@@ -41,8 +50,9 @@ function Plater(id, spr, x, y, front_spr, control_type, high_score) {
 }
 
 export function updatePlayers(dt) {
-    platers[0] = movePlayer(dt, platers[0]);
-    platers[1] = movePlayer(dt, platers[1]);
+    for (const [key, p] of Object.entries(platers)) {
+        p = movePlayer(dt, p);
+    }
 }
 
 
@@ -58,27 +68,40 @@ export function movePlayer(dt, p) {
     let btnp_right = -1;
     let btnp_c = -1;
 
-    if (p.control_type == 1) {
-        btn_right = btn.right;
-        btn_left = btn.left;
-        btn_up = btn.up;
-        btn_down = btn.down;
-        btn_c = btn.l;
-        btnp_space = btnp.k;
-        btnp_left = btnp.left;
-        btnp_right = btnp.right;
-        btnp_c = btnp.l;
+    if (singleplater) {
+        btn_right = btn.right || btn.d;
+        btn_left = btn.left || btn.a;
+        btn_up = btn.up || btn.w;
+        btn_down = btn.down || btn.s;
+        btn_c = btn.l || btn.t;
+        btnp_space = btnp.k || btnp.r;
+        btnp_left = btnp.left || btnp.a;
+        btnp_right = btnp.right || btnp.d;
+        btnp_c = btnp.l || btnp.t;
     }
-    else if (p.control_type == 2) {
-        btn_right = btn.d;
-        btn_left = btn.a;
-        btn_up = btn.w;
-        btn_down = btn.s;
-        btn_c = btn.t;
-        btnp_space = btnp.r;
-        btnp_left = btnp.a;
-        btnp_right = btnp.d;
-        btnp_c = btnp.t;
+    else {
+        if (p.control_type == 1) {
+            btn_right = btn.right;
+            btn_left = btn.left;
+            btn_up = btn.up;
+            btn_down = btn.down;
+            btn_c = btn.l;
+            btnp_space = btnp.k;
+            btnp_left = btnp.left;
+            btnp_right = btnp.right;
+            btnp_c = btnp.l;
+        }
+        else if (p.control_type == 2) {
+            btn_right = btn.d;
+            btn_left = btn.a;
+            btn_up = btn.w;
+            btn_down = btn.s;
+            btn_c = btn.t;
+            btnp_space = btnp.r;
+            btnp_left = btnp.a;
+            btnp_right = btnp.d;
+            btnp_c = btnp.t;
+        }
     }
 
     if (!p.opened_storage) {
@@ -400,12 +423,14 @@ function lookFront(tile, holding_item, held_item, px, py, p_id) {
 // DRAWING
 
 export function drawScore() { // 5 tall 3 wide
-    rectf(0,0,21,13);
     let offset = 1;
+    let x = 30;
 
-    for (const [key, plater] of Object.entries(platers)) {
-        print("" + (plater.id + 1) + ":" + plater.score + "\n", 1, offset);
-        offset += 6;
+    for (const [key, plater] of Object.entries(platers)) { // two players
+        let str = "" + (plater.id + 1) + ":" + plater.score;
+        drawRect(str, x, offset);
+        print(str, x, offset);
+        x += 60;
     }
 }
 
@@ -465,13 +490,18 @@ function drawFrontOfPlayer(p) {
 // DRAWING END
 
 export function resetPlayers() {
-    if (platers[0].score > platers[0].high_score) {
-        platers[0].high_score = platers[0].score;
+    for (const [key, p] of Object.entries(platers)) {
+        let pid = p.id;
+        let spr = p.spr;
+        let px = p.start_x;
+        let py = p.start_y;
+        let control_type = p.control_type;
+        if (p.score > p.high_score) {
+            p.high_score = p.score;
+        }
+        let high_score = p.high_score;
+        
+        p = -1;
+        platers[key] = Plater(pid, spr, px, py, 106, control_type, high_score);
     }
-    if (platers[1].score > platers[1].high_score) {
-        platers[1].high_score = platers[1].score;
-    }
-
-    platers[0] = Plater(0, 127, 50, 60, 106, 1, platers[0].high_score);
-    platers[1] = Plater(1, 111, 70, 60, 106, 2, platers[1].high_score);
 }
