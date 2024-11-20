@@ -423,11 +423,15 @@ function lookFront(tile, holding_item, held_item, px, py, p_id) {
 // DRAWING
 
 export function drawScore() { // 5 tall 3 wide
-    let offset = 1;
     let x = 30;
 
     for (const [key, plater] of Object.entries(platers)) { // two players
+        let offset = 1;
         let str = "" + (plater.id + 1) + ":" + plater.score;
+        drawRect(str, x, offset);
+        print(str, x, offset);
+        offset += 6;
+        str = "HS:" + plater.high_score;
         drawRect(str, x, offset);
         print(str, x, offset);
         x += 60;

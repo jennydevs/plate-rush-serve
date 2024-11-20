@@ -7,14 +7,15 @@ import {
     updatePlayers, drawPlayers, 
     drawHand, drawPlayersOnTop, drawPlayerFront, drawScore
 } from "./player.js";
-import { drawStart, drawEnd, drawPause, updateStart, calcCenterOffset } from "./menu.js";
+import { drawStart, drawEnd, drawPause, updateStart, calcCenterOffset, resetChoices, evaluateScores } from "./menu.js";
 import { resetGame, gameTimer } from "./level.js";
 import { addCharacters } from "./idkeys.js";
 
-let game_loop = false;
-let game_start = true;
-let game_end = false;
-let game_pause = false;
+var game_loop = false;
+var game_start = true;
+var game_end = false;
+var game_pause = false;
+var evaluated_score = false;
 
 calcCenterOffset();
 addCharacters();
@@ -54,8 +55,13 @@ exports.update = function () {
                 drawScore();
             }
             else if (game_end) {
+                if (!evaluated_score) {
+                    evaluateScores();
+                    evaluated_score = true;
+                }
                 if (btnp.enter) {
                     game_end = resetGame();
+                    evaluated_score = false;
                 }
 
                 drawEnd();
@@ -67,6 +73,14 @@ exports.update = function () {
             if (btnp.enter) {
                 game_end = resetGame();
                 game_pause = false;
+            }
+
+            if (btnp.k || btnp.r) {
+                game_loop = false;
+                game_pause = false;
+                game_start = true;
+                resetChoices();
+                resetGame();
             }
 
             drawPause();

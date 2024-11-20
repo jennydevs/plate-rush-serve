@@ -1,8 +1,8 @@
 import { setUpPlaters, platers } from "./player.js";
 import { menu_options, game_type_options, character_list } from "./idkeys.js";
-import { map_title } from "./map.js";
+import { map_title, map_pause, map_title_bg } from "./map.js";
 
-export function centerText(text) {
+export function centerText(text) { // make this more general
     let w = 4;
     // let h = 5;
     let offset_x = 60 + 5;
@@ -21,6 +21,10 @@ export function drawRect(text, x, offset_y) {
     let h = 7;
     let rect_w = text.length * w;
     rectf(x - 1, offset_y - 1, rect_w + 1, h);
+}
+
+export function resetChoices() {
+    choices[0] = 0;
 }
 
 
@@ -79,7 +83,6 @@ export function updateStart() {
         }
 
         if (btnp.left && !btnp.a && !btnp.right && !btnp.d) {
-            console.log(singleplater, !singleplater)
             if (!singleplater) {
                 p2_choice--;
                 if (p2_choice < 0) { p2_choice = character_list.length - 1; }
@@ -92,7 +95,6 @@ export function updateStart() {
             }
         }
         if (btnp.right && !btnp.d && !btnp.left && !btnp.a) {
-            console.log(singleplater)
             if (!singleplater) {
                 p2_choice++;
                 if (p2_choice > character_list.length - 1) { p2_choice = 0; }
@@ -121,7 +123,7 @@ export function updateStart() {
 }
 
 const strings = [
-    "Press ENTER/RETURN to start",
+    "Press Enter to start",
     menu_options[0],
     menu_options[1],
 ];
@@ -140,6 +142,7 @@ export function calcCenterOffset() {
 
 export function drawStart() { // real messy
     cls();
+    draw(map_title_bg, 0,0);
     draw(map_title,0, -10);
     
     let start_y = 100;
@@ -154,23 +157,30 @@ export function drawStart() { // real messy
     let top = start_y + (offset_y * 2);
 
     if (choices[0] == 0) {
+        drawRect(strings[1], offsets[1], start_y + (offset_y * 2));
         print(strings[1], offsets[1], start_y + (offset_y * 2));
         offset_y += h * 2;
         sprite(131, offsets[choices[1] + strings.length] - 8, start_y + offset_y - 2, true);
         sprite(131, game_type_options[choices[1]].length * 4 + offsets[choices[1] + strings.length] - 1, start_y + offset_y - 2);
+        drawRect(game_type_options[choices[1]], offsets[choices[1] + strings.length], start_y + offset_y);
         print(game_type_options[choices[1]], offsets[choices[1] + strings.length], start_y + offset_y); // watch this choice
+        sprite(131, centerText("I") - 2, start_y + offset_y + 7, false, false, true);
     }
     else if (choices[0] == 1) {
         if (game_type_options[choices[1]] == "Singleplayer") {
             sprite(131, 53, 85, true);
             sprite(131, 69, 85);
 
+            drawRect("P1", 61, 78);
             print ("P1", 61, 78);
+            sprite(136, 61, 85);
             sprite(character_list[choices[2][0]], 61, 85);
 
+            drawRect(strings[2], offsets[2], top);
             print(strings[2], offsets[2], top);
             offset_y += h * 2;
-            print(strings[0], offsets[0], start_y + offset_y)
+            drawRect(strings[0], offsets[0], start_y + offset_y);
+            print(strings[0], offsets[0], start_y + offset_y);
         }
         else {
             sprite(131, 21, 85, true);
@@ -179,104 +189,129 @@ export function drawStart() { // real messy
             sprite(131, 81, 85, true);
             sprite(131, 99, 85);
 
+            drawRect("P1", 31, 78);
+            drawRect("P2", 91, 78);
             print ("P1", 31, 78);
             print ("P2", 91, 78);
+            sprite(136, 30, 85);
+            sprite(136, 90, 85);
             sprite(character_list[choices[2][0]], 30, 85);
             sprite(character_list[choices[2][1]], 90, 85);
 
+            drawRect(strings[2], offsets[2], top);
             print(strings[2], offsets[2], top);
 
             offset_y += h * 2;
-            print(strings[0], offsets[0], start_y + offset_y)
+            drawRect(strings[0], offsets[0], start_y + offset_y);
+            print(strings[0], offsets[0], start_y + offset_y);
         }
+        sprite(131, centerText("I") - 2, start_y + offset_y + 7, false, false, true);
     }
 }
 
+var scores = [];
+var tied_score = [];
+var greatest_score = -1;
+var greatest_score_id = -1;
 
-export function drawEnd() {
-    let offset_y = 0;
-    let h = 7;
-
-    let tied_score = [];
-    let greatest_score = 0;
-    let id = -1;
+export function evaluateScores() {
+    scores = [];
+    tied_score = [];
+    greatest_score = -1;
+    greatest_score_id = -1;
 
     if (singleplater) {
+        let hs = false;
         let p = platers[0];
-        let str = "P" + p.id + ": " + p.score;
-        let x = centerText(str);
-        offset_y = 40;
-        drawRect(str, x, offset_y);
-        print(str, x, offset_y);
-        offset_y += h;
-
         if (p.score > p.high_score) {
-            str = "New High Score for P" + p.id + " is" + p.score + "!";
-            x = centerText(str);
-            drawRect(str, x, offset_y);
-            print(str, x, offset_y);
             p.high_score = p.score;
+            hs = true;
+        }
+        scores.push({"id": p.id + 1, "score": p.score, "high_score": hs});
+    }
+    else {
+        let temp_compare = {"id": -1, "score": -1};
+        for (const [key, p] of Object.entries(platers)) {
+            let hs = false;
+            let pid = p.id + 1;
+            if (p.score > p.high_score) {
+                p.high_score = p.score;
+                hs = true;
+            }
+
+            if (p.score > temp_compare.score) {
+                greatest_score = p.score;
+                greatest_score_id = pid;
+            }
+
+            temp_compare.id = pid;
+            temp_compare.score = p.score;
+
+            scores.push({"id": pid, "score": p.score, "high_score": hs});
+        }
+
+        for (let i = 0; i < scores.length; i++) { // ties
+            if (scores[i].score == greatest_score && scores[i].id !== id) {
+                tied_score.push({"id": scores[i].id, "score": scores[i].score});
+            }
+        }
+    }
+
+    tied_score.push({"id": greatest_score_id, "score": greatest_score});
+}
+
+export function drawEnd() { // should really precalculate offsets
+    let offset_y = 40;
+    let h = 7;
+
+    if (singleplater) {
+        let p = scores[0];
+
+        offset_y = drawRectAndOffset("P" + p.id + ":" + p.score, offset_y, h);
+
+        if (p.high_score) {
+            offset_y = drawRectAndOffset("New High Score!", offset_y, h);
         }
     }
     else {
-        offset_y = 40;
+        for (let i = 0; i < scores.length; i++) {
+            let p = scores[i];
 
-        for (const [key, p] of Object.entries(platers)) {
-            if (p.score > greatest_score) {
-                greatest_score = p.score;
-                id = p.id;
-            }
-            else if (p.score == greatest_score) {
-                tied_score.push({"id": key, "score": p.score});
-            }
-            let str = "P" + p.id + ": " + p.score;
-            let x = centerText(str);
-            drawRect(str, x, offset_y);
-            print(str, x, offset_y);
-            offset_y += h;
+            offset_y = drawRectAndOffset("P" + p.id + ":" + p.score, offset_y, h);
 
             if (p.score > p.high_score) {
-                str = "New High Score for P" + p.id + " is" + p.score + "!";
-                x = centerText(str);
-                drawRect(str, x, offset_y);
-                print(str, x, offset_y);
-                offset_y += h;
-                p.high_score = p.score;
+                offset_y = drawRectAndOffset("New High Score For P" + (p.id) + "!", offset_y, h);
             }
         }
 
-        if (tied_score.length !== 0) {
-            let str = "Tie!";
-            let x = centerText(str);
-            drawRect(str, x, offset_y);
-            print(str, x, offset_y);
-            offset_y += h;
-            for (let i = 0; i < tied_score.length; i++) {
-                str = "P" + tied_score[i].id + " is tied at " + tied_score[i].score + "!";
-                x = centerText(str);
-                drawRect(str, x, offset_y);
-                print(str, x, offset_y);
-                offset_y += h;
-            }
+        if (tied_score.length !== 1) {
+            offset_y = drawRectAndOffset("Tie!", offset_y, h);
         }
         else {
-            str = "P" + id + " wins with " + greatest_score + "!";
-            x = centerText(str);
-            drawRect(str, x, offset_y);
-            print(str, x, offset_y);
-            offset_y += h;
+            offset_y = drawRectAndOffset("P" + id + " wins!", offset_y, h);
         }
     }
 
-    let str = "Press Enter to Reset the Game";
-    let x = centerText(str);
-    drawRect(str, x, offset_y);
-    print(str, x, offset_y);
-    offset_y += h;
+    drawRectAndOffset("Press Enter to Reset the Game", offset_y, h);
 }
 
 export function drawPause() {
     cls();
-    print("Press ESC to return to game" + "\n");
-    print("Press Enter to Reset the Game" + "\n");
+    draw(map_pause, 0,0);
+
+    let h = 8;
+    let offset_y = 30;
+    offset_y = drawRectAndOffset("ESC to return to game", offset_y, h);
+    offset_y = drawRectAndOffset("R or K to return to start", offset_y, h);
+    offset_y = drawRectAndOffset("Enter to Reset the Game", offset_y, h);
+}
+
+function drawRectAndOffset(str, offset_y, h) {
+    let x = centerText(str);
+    drawRect(str, x, offset_y);
+    print(str, x, offset_y);
+
+    offset_y += h;
+
+    return offset_y;
 }
