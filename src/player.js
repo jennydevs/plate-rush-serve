@@ -216,9 +216,6 @@ export function movePlayer(dt, p) {
         }
 
         // From Monkey Warp Pixelbox by Cedric Stoquer
-
-        vx = Math.floor(vx * 100) / 100;
-        vy = Math.floor(vy * 100) / 100;
         
         cx = cx + vx * dt;
         cy = cy + vy * dt;
