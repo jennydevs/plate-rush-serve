@@ -24,6 +24,10 @@ export function setUpNPC() {
     setUpTables();
     setUpOpenSeats();
 
+    spawnNPCS();
+}
+
+function spawnNPCS() {
     createNPC();
     createNPC();
     createNPC();
@@ -678,7 +682,7 @@ export function drawNPC()  {
             if (npcs[i].table_seat) { id = npcs[i].belt; }
             if (npcs[i].dir == direction.left) { flipped = true };
 
-            sprite(npcs[i].spr, npcs[i].x * 8, npcs[i].y * 8, flipped);
+            sprite(npcs[i].spr, npcs[i].x * 8, npcs[i].y * 8 - 2, flipped);
             sprite(90, item_tiles[id].x * 8, item_tiles[id].y * 8);
         }
         else if (npcs[i].table_seat && npcs[i].served) {
@@ -705,9 +709,8 @@ export function drawNPCOrders() {
                 offset = 0;
             }
 
-            sprite(49, npc_x * 8, npc_y * 8 + offset);
-            sprite(npcs[i].order.food, npc_x * 8, npc_y * 8 + offset); 
-            sprite(50, npc_x * 8, npc_y * 8 + offset);
+            sprite(49, npc_x * 8, npc_y * 8 - 2 + offset);
+            sprite(npcs[i].order.food, npc_x * 8, npc_y * 8 - 2 + offset); 
         }
     }
 }
@@ -752,6 +755,7 @@ export function npcCheck(belt_items) {
                             removeItem(b.x, b.y);
                         }
     
+                        belt_items[key] = -1; // no double orders for the table
                         b = -1; // no double orders for the table
                     }
                 }
@@ -761,8 +765,6 @@ export function npcCheck(belt_items) {
 
     return belt_items;
 }
-
-
 
 export function resetNPCS() {
     npcs = [];
@@ -781,9 +783,5 @@ export function resetNPCS() {
 
     spawn_current_timer = 0;
 
-    createNPC();
-    createNPC();
-    createNPC();
-    createNPC();
-    createNPC();
+    spawnNPCS();
 }
