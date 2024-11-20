@@ -19,15 +19,19 @@ export function setUpItems() {
     addItemTileIds();
 
 	spawnBeltItems();
+	spawnSpotItems();
 }
 
 export function spawnBeltItems() {
-	addItem(item_key["pot"], item_tiles[getItemKey(5,3)], -1);
-	addItem(item_key["pot"], item_tiles[getItemKey(7, 3)], -1);
-	addItem(item_key["fry_tray"], item_tiles[getItemKey(8,3)], -1);
-	addItem(item_key["fryer_book"], item_tiles[getItemKey(9,3)], -1);
-	addItem(item_key["stove_book"], item_tiles[getItemKey(10, 3)], -1);
-	addItem(item_key["infinite_plates"], item_tiles[getItemKey(11, 3)], -1);
+	addItem(item_key["infinite_plates"], item_tiles[getItemKey(7, 3)], -1);
+}
+
+function spawnSpotItems() {
+	addItem(item_key["pot"], item_tiles[getItemKey(7,9)], -1);
+	addItem(item_key["fry_tray"], item_tiles[getItemKey(8,9)], -1);
+	addItem(item_key["pot"], item_tiles[getItemKey(9, 9)], -1);
+	addItem(item_key["fryer_book"], item_tiles[getItemKey(6,9)], -1);
+	addItem(item_key["stove_book"], item_tiles[getItemKey(5, 9)], -1);
 }
 
 export function setItemToMap(on_counter, spr, x, y) {
@@ -471,8 +475,8 @@ export function moveStorageSelection(storage_id, move) {
 		if (move == direction.right) { selection++; }
 		else if (move == direction.left) { selection--; }
 
-		if (selection >= max_choice) { selection = max_choice; }
-		if (selection < min_choice) { selection = min_choice; }
+		if (selection > max_choice) { selection = min_choice; }
+		if (selection < min_choice) { selection = max_choice; }
 
 		storage.current_selection = selection;
 	}
@@ -592,13 +596,8 @@ function drawStorageMenu() {
 
 			const currently_selected = storage.current_selection;
 
-			if (currently_selected !== 0) { // left
-				sprite(arrow, storage.x * 8 - 8, storage.y * 8 + offset_2, true);
-			}
-
-			if (currently_selected !== storage.max_choice - 1) { // right
-				sprite(arrow, storage.x * 8 + 8, storage.y * 8 + offset_2);
-			}
+			sprite(arrow, storage.x * 8 - 8, storage.y * 8 + offset_2, true);
+			sprite(arrow, storage.x * 8 + 8, storage.y * 8 + offset_2);
 
 			sprite(bg, storage.x * 8, storage.y * 8 - 8);
 			sprite(storage.contents[currently_selected], storage.x * 8, storage.y * 8 + offset_2);
@@ -703,4 +702,11 @@ export function resetItems() {
 	}
 
 	clearItemMaps();
+
+	for (const [key, s] of Object.entries(storages)) {
+		s.open = false;
+		s.current_selection = 0;
+	}
+
+	spawnSpotItems();
 }
