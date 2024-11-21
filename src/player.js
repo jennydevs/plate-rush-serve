@@ -49,6 +49,10 @@ function Plater(id, spr, x, y, front_spr, control_type, high_score) {
     };
 }
 
+export function addScore(plater, pay) {
+    platers[plater].score += pay;
+}
+
 export function updatePlayers(dt) {
     for (const [key, p] of Object.entries(platers)) {
         p = movePlayer(dt, p);
@@ -263,7 +267,7 @@ export function movePlayer(dt, p) {
             moveStorageSelection(p.storage_id, direction.left);
         }
         if (btnp_space && !btnp_left && !btnp_right) {
-            p.held_item = grabStorageItem(p.storage_id);
+            p.held_item = grabStorageItem(p.storage_id, p.id);
             p.holding_item = true;
             p.opened_storage = false;
         }

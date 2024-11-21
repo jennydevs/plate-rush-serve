@@ -9,7 +9,7 @@ import {
 } from "./player.js";
 import { drawStart, drawEnd, drawPause, updateStart, calcCenterOffset, resetChoices, evaluateScores } from "./menu.js";
 import { resetGame, gameTimer } from "./level.js";
-import { addCharacters } from "./idkeys.js";
+import { addCharacters, createScoring } from "./idkeys.js";
 
 var game_loop = false;
 var game_start = true;
@@ -18,6 +18,7 @@ var game_pause = false;
 var evaluated_score = false;
 
 calcCenterOffset();
+createScoring();
 addCharacters();
 setColors();
 setUpBelts();

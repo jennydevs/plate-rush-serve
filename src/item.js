@@ -23,7 +23,6 @@ export function setUpItems() {
 }
 
 export function spawnBeltItems() {
-	addItem(item_key["infinite_plates"], item_tiles[getItemKey(7, 3)], -1);
 }
 
 function spawnSpotItems() {
@@ -32,6 +31,7 @@ function spawnSpotItems() {
 	addItem(item_key["pot"], item_tiles[getItemKey(9, 9)], -1);
 	addItem(item_key["fryer_book"], item_tiles[getItemKey(6,9)], -1);
 	addItem(item_key["stove_book"], item_tiles[getItemKey(5, 9)], -1);
+	addItem(item_key["infinite_plates"], item_tiles[getItemKey(6, 6)], -1);
 }
 
 export function setItemToMap(on_counter, spr, x, y) {
@@ -78,7 +78,7 @@ export function addItem(item_spr, spot, score) {
 	}
 
 	if (item_spr == item_key["money"]) {
-		if (score !== -1) {
+		if (score !== -1 && typeof score == "number") {
 			item.type = "money";
 			item.score = score;
 		}
@@ -132,8 +132,13 @@ export function addItem(item_spr, spot, score) {
 		item.type = "serve"; // ?
 		item.subtype = "plate";
 	}
-	else { // remove hmm
-		item.cooked = false; // for ingredients and stuff
+	else {
+		if (typeof score == "object") {
+			item.chef = score.chef;
+		}
+		else {
+			item.chef = -1;
+		}
 	}
 
 	if (spot == -1) { // give item directly
@@ -453,11 +458,11 @@ export function interactFront(p_id, tile, holding_item, held_item) {
     return held_item;
 }
 
-export function grabStorageItem(storage_id) {
+export function grabStorageItem(storage_id, pid) {
 	const storage = storages[storage_id];
 	storage.open = false;
 
-	return addItem(storage.contents[storage.current_selection], -1, -1);
+	return addItem(storage.contents[storage.current_selection], -1, {"chef": pid});
 }
 
 export function leaveStorage(storage_id) {

@@ -230,25 +230,26 @@ export const drink_orders = [
 ];
 
 export const item_scores = {};
-item_scores[item_key.apple_plate] = 1;
-item_scores[item_key.cake_slice] = 6;
-item_scores[item_key.candy_plate] = 1
-item_scores[item_key.cherry_plate] = 1;
-item_scores[item_key.egg_rice] = 4;
-item_scores[item_key.flan] = 4;
-item_scores[item_key.fried_egg] = 2;
-item_scores[item_key.fried_shrimp] = 3;
-item_scores[item_key.kebab] = 4;
-item_scores[item_key.pizza] = 4;
-item_scores[item_key.soup] = 4;
-item_scores[item_key.sushi] = 4;
-item_scores[item_key.coffee] = 1;
-item_scores[item_key.soda] = 1;
-item_scores[item_key.milk] = 1;
-item_scores[item_key.water] = 1;
-item_scores[item_key.wine] = 1;
-item_scores[item_key.ice_cream] = 1;
-item_scores[item_key.tea] = 1;
+
+export function createScoring() {
+    for (const [key, food] of Object.entries(one_ingredient_recipes)) {
+        item_scores[item_key[key]] = 2;
+    }
+
+    for (const [key, food] of Object.entries(stove_recipes)) {
+        item_scores[item_key[key]] = food.length + 2;
+    }
+
+    item_scores[item_key.cake_slice] = 10;
+
+    for (const [key, food] of Object.entries(fryer_recipes)) {
+        item_scores[item_key[key]] = food.length + 2;
+    }
+
+    for (let i = 0; i < drink_orders.length; i++) {
+        item_scores[drink_orders[i]] = 1;
+    }
+}
 
 
 export const score = {

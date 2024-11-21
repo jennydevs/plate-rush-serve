@@ -1,6 +1,7 @@
 import { npc_spots, npc_list, direction, drink_orders, food_orders, score, item_scores } from "./idkeys.js";
 import { getMapTile, map_item, map_npc, map_furniture } from "./map.js";
 import { checkCanPickUp, addItem, removeItem, item_tiles, items, getItemKey, resetSpot } from "./item.js";
+import { addScore } from "./player.js";
 
 let npcs = [];
 const seats = [];
@@ -41,7 +42,6 @@ function NPC(spr, move_timer) {
     return {
         "spr": spr == -1? npc_list[random(npc_list.length)] : spr,
         "order": -1,
-        "pay": 0,
         "seat_num": -1,
         "dx": -8,
         "dy": -8,
@@ -157,7 +157,10 @@ export function updateNPC() {
                         table.people_served--;
 
                         let tile = getMapTile(map_item, npc.front[0], npc.front[1]);
-                        removeItem(item_tiles[getItemKey(npc.front[0], npc.front[1])],npc.front[0], npc.front[1]);
+                        if (checkCanPickUp(item_tiles[getItemKey(npc.front[0], npc.front[1])])) {
+                            removeItem(npc.front[0], npc.front[1]);
+                        }
+
                         addItem(score.money, item_tiles[getItemKey(tile.x, tile.y)], npc.order.pay);
 
                         if (table.current_people == 0) {
@@ -731,6 +734,7 @@ export function npcCheck(belt_items) {
                     
                     if (!npc.table_seat) {
                         if (checkCanPickUp(item_tiles[getItemKey(b.x, b.y)])) {
+                            addScore(b.chef, npc.order.pay);
                             removeItem(b.x, b.y);
                             b = -1;
                         };
@@ -749,7 +753,8 @@ export function npcCheck(belt_items) {
                         let table_item = items[getItemKey(tile.x, tile.y)];
                         if (table_item !== undefined || table_item !== -1) { removeItem(table_item); } // remove items on table before serving
     
-                        addItem(b.spr, tile, -1);
+                        addScore(b.chef, npc.order.pay);
+                        addItem(b.spr, tile, {"chef": b.chef});
 
                         if (checkCanPickUp(item_tiles[getItemKey(b.x, b.y)])) {
                             removeItem(b.x, b.y);
