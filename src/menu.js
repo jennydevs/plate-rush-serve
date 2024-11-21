@@ -210,7 +210,6 @@ export function drawStart() { // real messy
 }
 
 var scores = [];
-var id = -1;
 var tied_score = [];
 var greatest_score = -1;
 var greatest_score_id = -1;
@@ -220,7 +219,6 @@ export function evaluateScores() {
     tied_score = [];
     greatest_score = -1;
     greatest_score_id = -1;
-    id = -1;
 
     if (singleplater) {
         let hs = false;
@@ -229,7 +227,7 @@ export function evaluateScores() {
             p.single_hs = p.score;
             hs = true;
         }
-        scores.push({"id": p.id + 1, "score": p.score, "high_score": hs});
+        scores.push({"id": p.id + 1, "score": p.score, "got_high_score": hs});
     }
     else {
         let temp_compare = {"id": -1, "score": -1};
@@ -249,17 +247,17 @@ export function evaluateScores() {
             temp_compare.id = pid;
             temp_compare.score = p.score;
 
-            scores.push({"id": pid, "score": p.score, "high_score": hs});
+            scores.push({"id": pid, "score": p.score, "got_high_score": hs});
         }
 
         for (let i = 0; i < scores.length; i++) { // ties
-            if (scores[i].score == greatest_score && scores[i].id !== id) {
+            if (scores[i].score !== -1 && scores[i].score == greatest_score && scores[i].id !== greatest_score_id) {
                 tied_score.push({"id": scores[i].id, "score": scores[i].score});
             }
         }
     }
 
-    tied_score.push({"id": greatest_score_id, "score": greatest_score}); // deal with this hmm
+    tied_score.push({"id": greatest_score_id, "score": greatest_score});
 }
 
 export function drawEnd() { // should really precalculate offsets
@@ -271,7 +269,7 @@ export function drawEnd() { // should really precalculate offsets
 
         offset_y = drawRectAndOffset("P" + p.id + ":" + p.score, offset_y, h);
 
-        if (p.single_hs) {
+        if (p.got_high_score) {
             offset_y = drawRectAndOffset("New High Score!", offset_y, h);
         }
     }
@@ -279,18 +277,18 @@ export function drawEnd() { // should really precalculate offsets
         for (let i = 0; i < scores.length; i++) {
             let p = scores[i];
 
-            offset_y = drawRectAndOffset("P" + p.id + ":" + p.score, offset_y, h);
-
-            if (p.score > p.multi_hs) {
-                offset_y = drawRectAndOffset("New High Score For P" + (p.id) + "!", offset_y, h);
+            if (p.got_high_score) {
+                offset_y = drawRectAndOffset("New High Score!", offset_y, h);
             }
+
+            offset_y = drawRectAndOffset("P" + p.id + ":" + p.score, offset_y, h);
         }
 
-        if (tied_score.length !== 1) {
+        if (tied_score.length > 1) {
             offset_y = drawRectAndOffset("Tie!", offset_y, h); // hmm display tie when not tied
         }
         else {
-            offset_y = drawRectAndOffset("P" + id + " wins!", offset_y, h);
+            offset_y = drawRectAndOffset("P" + greatest_score_id + " wins!", offset_y, h);
         }
     }
 
