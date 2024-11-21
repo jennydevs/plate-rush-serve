@@ -33,86 +33,95 @@ export function resetChoices() {
     choices[0] = 0;
 }
 
-
-let choices = [0, 0, [0,0]]; // up/down / left/right / char select
-let singleplater = game_type_options[choices[1]] == "Singleplayer"? true: false;
-
-export function updateStart() {
-    let menu_choice = choices[0]; // up / down
-    let option_choice = choices[1]; // left / right
-    let p1_choice = choices[2][0];
-    let p2_choice = choices[2][1];
-
+function switchMenus(choice, options) {
     if (btnp.down || btnp.s && !btnp.w && !btnp.up) {
-        menu_choice++;
-        if (menu_choice > menu_options.length - 1) { menu_choice = 0; }
-        choices[0] = menu_choice;
+        choice++;
+        if (choice > options.length - 1) { choice = 0; }
     }
     if (btnp.up || btnp.w && !btnp.down && !btnp.s) {
-        menu_choice--;
-        if (menu_choice < 0) { menu_choice = menu_options.length - 1; }
-        choices[0] = menu_choice;
+        choice--;
+        if (choice < 0) { choice = options.length - 1; }
     }
+
+    return choice;
+}
+
+function switchOptions(choice, options) {
+    if (btnp.left || btnp.a && !btnp.right && !btnp.d) {
+        choice--;
+        if (choice < 0) { choice = options.length - 1; }
+    }
+    if (btnp.right || btnp.d && !btnp.left && !btnp.a) {
+        choice++;
+        if (choice > options.length - 1) { choice = 0; }
+    }
+
+    return choice;
+}
+
+function swapCharacters(player, choice, singleplayer, options) {
+    let left = false;
+    let right = false;
+    let not_left = false;
+    let not_right = false;
+
+    if (singleplayer) {
+        not_left = !btnp.right && !btnp.d;
+        not_right = !btnp.left && !btnp.a;
+        left = (btnp.a || btnp.left) && not_left;
+        right = (btnp.d || btnp.right) && not_right;
+    }
+    else if (player == 1) {
+        not_left = !btnp.left && !btnp.right && !btnp.d;
+        not_right = !btnp.right && !btnp.left && !btnp.a;
+        left = btnp.a;
+        right = btnp.d;
+
+        left = left && not_left;
+        right = right && not_right;
+    }
+    else if (player == 2){
+        not_left = !btnp.a && !btnp.right && !btnp.d;
+        not_right = !btnp.d && !btnp.left && !btnp.a;
+        left = btnp.left;
+        right = btnp.right;
+        left = left && not_left;
+        right = right && not_right;
+    }
+
+    return loopSelection(choice, options, left, right);
+}
+
+function loopSelection(choice, options, left, right) {
+    if (left) {
+        choice--;
+        if (choice < 0) { choice = options.length - 1; }
+    }
+    if (right) {
+        choice++;
+        if (choice > options.length - 1) { choice = 0; }
+    }
+
+    return choice;
+}
+
+
+let choices = [0, 0, [0,0]]; // up/down / left/right / char select
+let singleplater = game_type_options[choices[1]] == "Singleplayer"? true : false;
+
+export function updateStart() {
+    choices[0] = switchMenus(choices[0], menu_options);
 
     if (choices[0] == 0) { // GAME MODE
-        if (btnp.left || btnp.a 
-            && !btnp.right && !btnp.d) {
-            option_choice--;
-            if (option_choice < 0) { option_choice = game_type_options.length - 1; }
-            choices[1] = option_choice;
-        }
-        if (btnp.right || btnp.d 
-            && !btnp.left && !btnp.a) {
-            option_choice++;
-            if (option_choice > game_type_options.length - 1) { option_choice = 0; }
-            choices[1] = option_choice;
-        }
+        choices[1] = switchOptions(choices[1], game_type_options);
     }
 
-    if (game_type_options[choices[1]] == "Singleplayer") {
-        singleplater = true;
-    }
-    else {
-        singleplater = false;
-    }
+    singleplater = game_type_options[choices[1]] == "Singleplayer" ? true : false;
 
     if (choices[0] == 1) { // CHARACTER
-        if (btnp.a && !btnp.left && !btnp.right && !btnp.d) {
-            p1_choice--;
-            if (p1_choice < 0) { p1_choice = character_list.length - 1; }
-            choices[2][0] = p1_choice;
-        }
-        if (btnp.d && !btnp.right && !btnp.left && !btnp.a) {
-            p1_choice++;
-            if (p1_choice > character_list.length - 1) { p1_choice = 0; }
-            choices[2][0] = p1_choice;
-        }
-
-        if (btnp.left && !btnp.a && !btnp.right && !btnp.d) {
-            if (!singleplater) {
-                p2_choice--;
-                if (p2_choice < 0) { p2_choice = character_list.length - 1; }
-                choices[2][1] = p2_choice;
-            }
-            else {
-                p1_choice--;
-                if (p1_choice < 0) { p1_choice = character_list.length - 1; }
-                choices[2][0] = p1_choice;
-            }
-        }
-        if (btnp.right && !btnp.d && !btnp.left && !btnp.a) {
-            if (!singleplater) {
-                p2_choice++;
-                if (p2_choice > character_list.length - 1) { p2_choice = 0; }
-                choices[2][1] = p2_choice;
-            }
-            else {
-                p1_choice++;
-                if (p1_choice > character_list.length - 1) { p1_choice = 0; }
-                choices[2][0] = p1_choice;
-            }
-        }
-
+        choices[2][0] = swapCharacters(1, choices[2][0], singleplater, character_list);
+        choices[2][1] = swapCharacters(2, choices[2][1], singleplater, character_list);
+        
         if (btnp.enter) {
             if (game_type_options[choices[1]] == "Singleplayer") {
                 setUpPlaters(character_list[choices[2][0]], -1, game_type_options[choices[1]], -1);
@@ -154,11 +163,6 @@ export function drawStart() { // real messy
     let start_y = 100;
     let offset_y = 0;
     let h = 6;
-
-    // for (let i = 0; i < strings.length; i++) {
-    //     print(strings[i] + "\n", offsets[i], start_y + offset_y);
-    //     offset_y += h;
-    // }
 
     let top = start_y + (offset_y * 2);
 
