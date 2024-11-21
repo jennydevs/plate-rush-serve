@@ -109,11 +109,11 @@ export function updateStart() {
 
         if (btnp.enter) {
             if (game_type_options[choices[1]] == "Singleplayer") {
-                setUpPlaters(character_list[choices[2][0]], -1);
+                setUpPlaters(character_list[choices[2][0]], -1, game_type_options[choices[1]]);
             }
             else {
                 singleplater = false;
-                setUpPlaters(character_list[choices[2][0]], character_list[choices[2][1]]);
+                setUpPlaters(character_list[choices[2][0]], character_list[choices[2][1]], game_type_options[choices[1]]);
             }
             return [false, true]; // game start, and loop
         }
@@ -210,6 +210,7 @@ export function drawStart() { // real messy
 }
 
 var scores = [];
+var id = -1;
 var tied_score = [];
 var greatest_score = -1;
 var greatest_score_id = -1;
@@ -219,12 +220,13 @@ export function evaluateScores() {
     tied_score = [];
     greatest_score = -1;
     greatest_score_id = -1;
+    id = -1;
 
     if (singleplater) {
         let hs = false;
         let p = platers[0];
-        if (p.score > p.high_score) {
-            p.high_score = p.score;
+        if (p.score > p.single_hs) {
+            p.single_hs = p.score;
             hs = true;
         }
         scores.push({"id": p.id + 1, "score": p.score, "high_score": hs});
@@ -234,8 +236,8 @@ export function evaluateScores() {
         for (const [key, p] of Object.entries(platers)) {
             let hs = false;
             let pid = p.id + 1;
-            if (p.score > p.high_score) {
-                p.high_score = p.score;
+            if (p.score > p.multi_hs) {
+                p.multi_hs = p.score;
                 hs = true;
             }
 
@@ -257,7 +259,7 @@ export function evaluateScores() {
         }
     }
 
-    tied_score.push({"id": greatest_score_id, "score": greatest_score});
+    tied_score.push({"id": greatest_score_id, "score": greatest_score}); // deal with this hmm
 }
 
 export function drawEnd() { // should really precalculate offsets
@@ -269,7 +271,7 @@ export function drawEnd() { // should really precalculate offsets
 
         offset_y = drawRectAndOffset("P" + p.id + ":" + p.score, offset_y, h);
 
-        if (p.high_score) {
+        if (p.single_hs) {
             offset_y = drawRectAndOffset("New High Score!", offset_y, h);
         }
     }
@@ -279,13 +281,13 @@ export function drawEnd() { // should really precalculate offsets
 
             offset_y = drawRectAndOffset("P" + p.id + ":" + p.score, offset_y, h);
 
-            if (p.score > p.high_score) {
+            if (p.score > p.multi_hs) {
                 offset_y = drawRectAndOffset("New High Score For P" + (p.id) + "!", offset_y, h);
             }
         }
 
         if (tied_score.length !== 1) {
-            offset_y = drawRectAndOffset("Tie!", offset_y, h);
+            offset_y = drawRectAndOffset("Tie!", offset_y, h); // hmm display tie when not tied
         }
         else {
             offset_y = drawRectAndOffset("P" + id + " wins!", offset_y, h);

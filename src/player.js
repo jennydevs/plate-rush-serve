@@ -5,18 +5,58 @@ import { drawRect } from "./menu.js";
 
 let singleplater = true;
 
-export let platers = {};
+export let platers = {
+    0: -1,
+    1: -1,
+};
 
-export function setUpPlaters(spr_1, spr_2) {
-    platers[0] = Plater(0, spr_1, 50, 60, 106, 2, 0);
+let p2_storage = -1;
 
-    if (spr_2 !== -1) {
-        platers[1] = Plater(1, spr_2, 70, 60, 106, 1, 0);
+export function setUpPlaters(spr_1, spr_2, mode) {
+    let s_hs = 0;
+    let m_hs = 0;
+
+    if (mode == "Singleplayer") { 
+
+        if (platers[0] !== -1) {
+            s_hs = platers[0].single_hs;
+            m_hs = platers[0].multi_hs;
+        }
+  
+        platers[0] = Plater(0, spr_1, 50, 60, 106, 2, s_hs, m_hs, mode);
+
+        s_hs = 0;
+        m_hs = 0;
+
+        if (platers[1] !== -1) {
+            m_hs = platers[1].multi_hs;
+        }
+        else if (p2_storage !== -1) {
+            m_hs = p2_storage;
+            p2_storage = -1;
+        }
+
+        platers[1] = Plater(1, spr_2, 70, 60, 106, 1, 0, m_hs, "Multiplayer VS");
+
         singleplater = false;
+    }
+    else {
+        if (platers[1] !== -1) {
+            p2_storage = platers[1].multi_hs;
+            platers[1] = -1;
+        }
+
+        if (platers[0] !== -1) {
+            s_hs = platers[0].single_hs;
+            m_hs = platers[0].multi_hs;
+            platers[0] = Plater(0, spr_1, 60, 60, 106, 2, s_hs, m_hs, mode);
+        }
+
+        singleplater = true;
     }
 }
 
-function Plater(id, spr, x, y, front_spr, control_type, high_score) {
+function Plater(id, spr, x, y, front_spr, control_type, single_hs, multi_hs, mode) {
     return {
         "id": id,
         "px": x,
@@ -45,7 +85,9 @@ function Plater(id, spr, x, y, front_spr, control_type, high_score) {
         "on_belt": false,
         "on_counter": false,
         "score": 0,
-        "high_score": high_score,
+        "mode": mode,
+        "single_hs": single_hs,
+        "multi_hs": multi_hs,
     };
 }
 
@@ -55,7 +97,9 @@ export function addScore(plater, pay) {
 
 export function updatePlayers(dt) {
     for (const [key, p] of Object.entries(platers)) {
-        p = movePlayer(dt, p);
+        if (p !== -1) {
+            p = movePlayer(dt, p);
+        }
     }
 }
 
@@ -427,47 +471,64 @@ export function drawScore() { // 5 tall 3 wide
     let x = 30;
 
     for (const [key, plater] of Object.entries(platers)) { // two players
-        let offset = 1;
-        let str = "" + (plater.id + 1) + ":" + plater.score;
-        drawRect(str, x, offset);
-        print(str, x, offset);
-        offset += 6;
-        str = "HS:" + plater.high_score;
-        drawRect(str, x, offset);
-        print(str, x, offset);
-        x += 60;
+        if (plater !== -1) {
+            let offset = 1;
+            let str = "" + (plater.id + 1) + ":" + plater.score;
+            drawRect(str, x, offset);
+            print(str, x, offset);
+            offset += 6;
+            let display_hs = -1;
+            if (plater.mode == "Singleplayer") {
+                display_hs = plater.single_hs;
+            }
+            else if (plater.mode == "Multiplayer VS") {
+                display_hs = plater.multi_hs;
+            }
+            str = "HS:" + display_hs;
+            drawRect(str, x, offset);
+            print(str, x, offset);
+            x += 60;
+        }
     }
 }
 
 export function drawPlayers() {
     for (const [key, plater] of Object.entries(platers)) {
-        drawPlayerItem(plater);
+        if (plater !== -1) {
+            drawPlayerItem(plater);
 
-        if (!plater.on_belt && !plater.on_counter) {
-            drawPlayer(plater);
+            if (!plater.on_belt && !plater.on_counter) {
+                drawPlayer(plater);
+            }
         }
     }
 }
 
 export function drawPlayersOnTop() {
     for (const [key, plater] of Object.entries(platers)) {
-        drawPlayerItem(plater);
+        if (plater !== -1) {
+            drawPlayerItem(plater);
 
-        if (plater.on_belt || plater.on_counter) {
-            drawPlayer(plater);
+            if (plater.on_belt || plater.on_counter) {
+                drawPlayer(plater);
+            }
         }
     }
 }
 
 export function drawPlayerFront() {
     for (const [key, plater] of Object.entries(platers)) {
-        drawFrontOfPlayer(plater);
+        if (plater !== -1) {
+            drawFrontOfPlayer(plater);
+        }
     }
 }
 
 export function drawHand() {
     for (const [key, plater] of Object.entries(platers)) {
-        drawPlayerItem(plater);
+        if (plater !== -1) {
+            drawPlayerItem(plater);
+        }
     }
 }
 
@@ -496,17 +557,25 @@ function drawFrontOfPlayer(p) {
 
 export function resetPlayers() {
     for (const [key, p] of Object.entries(platers)) {
-        let pid = p.id;
-        let spr = p.spr;
-        let px = p.start_x;
-        let py = p.start_y;
-        let control_type = p.control_type;
-        if (p.score > p.high_score) {
-            p.high_score = p.score;
+        if (p !== -1) {
+            let pid = p.id;
+            let spr = p.spr;
+            let px = p.start_x;
+            let py = p.start_y;
+            let control_type = p.control_type;
+            
+            if (p.mode == "Singleplayer") {
+                if (p.score > p.single_hs) {
+                    p.single_hs = p.score;
+                }
+            }
+            else if (p.mode == "Multiplayer VS") {
+                if (p.score > p.multi_hs) {
+                    p.multi_hs = p.score;
+                }
+            }
+            
+            platers[key] = Plater(pid, spr, px, py, 106, control_type, p.single_hs, p.multi_hs, p.mode);
         }
-        let high_score = p.high_score;
-        
-        p = -1;
-        platers[key] = Plater(pid, spr, px, py, 106, control_type, high_score);
     }
 }

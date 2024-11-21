@@ -88,7 +88,7 @@ exports.update = function () {
         }
     }
     else if (game_start) {
-        let set_states = updateStart(game_start);
+        let set_states = updateStart();
         game_start = set_states[0];
         game_loop = set_states[1];
         drawStart();
