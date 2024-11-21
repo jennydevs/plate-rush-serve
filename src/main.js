@@ -60,8 +60,8 @@ exports.update = function () {
                     evaluateScores();
                     evaluated_score = true;
                 }
-                if (btnp.enter) {
-                    game_end = resetGame();
+                if (evaluated_score && btnp.enter) {
+                    game_end = resetGame(game_end);
                     evaluated_score = false;
                 }
 
@@ -72,16 +72,16 @@ exports.update = function () {
         } 
         else if (game_pause) {
             if (btnp.enter) {
-                game_end = resetGame();
+                game_end = resetGame(game_end);
                 game_pause = false;
             }
 
-            if (btnp.k || btnp.r) {
+            if (btnp.k || btnp.r) { // return to menu
                 game_loop = false;
                 game_pause = false;
                 game_start = true;
                 resetChoices();
-                resetGame();
+                resetGame(game_end);
             }
 
             drawPause();

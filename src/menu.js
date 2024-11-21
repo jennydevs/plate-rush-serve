@@ -1,6 +1,12 @@
-import { setUpPlaters, platers } from "./player.js";
+import { setUpPlaters, platers, sendWinner } from "./player.js";
 import { menu_options, game_type_options, character_list } from "./idkeys.js";
 import { map_title, map_pause, map_title_bg } from "./map.js";
+
+var scores = [];
+var tied_score = [];
+var greatest_score = -1;
+var greatest_score_id = -1;
+var winner = -1;
 
 export function centerText(text) { // make this more general
     let w = 4;
@@ -109,11 +115,11 @@ export function updateStart() {
 
         if (btnp.enter) {
             if (game_type_options[choices[1]] == "Singleplayer") {
-                setUpPlaters(character_list[choices[2][0]], -1, game_type_options[choices[1]]);
+                setUpPlaters(character_list[choices[2][0]], -1, game_type_options[choices[1]], -1);
             }
             else {
                 singleplater = false;
-                setUpPlaters(character_list[choices[2][0]], character_list[choices[2][1]], game_type_options[choices[1]]);
+                setUpPlaters(character_list[choices[2][0]], character_list[choices[2][1]], game_type_options[choices[1]], -1);
             }
             return [false, true]; // game start, and loop
         }
@@ -209,16 +215,12 @@ export function drawStart() { // real messy
     }
 }
 
-var scores = [];
-var tied_score = [];
-var greatest_score = -1;
-var greatest_score_id = -1;
-
 export function evaluateScores() {
     scores = [];
     tied_score = [];
     greatest_score = -1;
     greatest_score_id = -1;
+    winner = -1;
 
     if (singleplater) {
         let hs = false;
@@ -231,7 +233,7 @@ export function evaluateScores() {
     }
     else {
         let temp_compare = {"id": -1, "score": -1};
-        for (const [key, p] of Object.entries(platers)) {
+        for (const [key, p] of Object.entries(platers)) { // already set scores here
             let hs = false;
             let pid = p.id + 1;
             if (p.score > p.multi_hs) {
@@ -255,9 +257,15 @@ export function evaluateScores() {
                 tied_score.push({"id": scores[i].id, "score": scores[i].score});
             }
         }
-    }
 
-    tied_score.push({"id": greatest_score_id, "score": greatest_score});
+        tied_score.push({"id": greatest_score_id, "score": greatest_score});
+
+        if (tied_score.length == 1 && greatest_score_id !== -1) {
+            winner = greatest_score_id - 1;
+            sendWinner(winner);
+            winner = -1; // reset winner after sending
+        }
+    }
 }
 
 export function drawEnd() { // should really precalculate offsets
@@ -285,7 +293,7 @@ export function drawEnd() { // should really precalculate offsets
         }
 
         if (tied_score.length > 1) {
-            offset_y = drawRectAndOffset("Tie!", offset_y, h); // hmm display tie when not tied
+            offset_y = drawRectAndOffset("Tie!", offset_y, h);
         }
         else {
             offset_y = drawRectAndOffset("P" + greatest_score_id + " wins!", offset_y, h);
