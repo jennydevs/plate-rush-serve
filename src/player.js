@@ -13,30 +13,24 @@ export let platers = {
 let p2_storage = -1;
 
 export function setUpPlaters(spr_1, spr_2, mode) {
-    let s_hs = 0;
-    let m_hs = 0;
-
-    if (mode == "Singleplayer") { 
-
+    if (spr_2 !== -1) { 
         if (platers[0] !== -1) {
-            s_hs = platers[0].single_hs;
-            m_hs = platers[0].multi_hs;
+            platers[0] = Plater(0, spr_1, 50, 60, 106, 2, platers[0].single_hs, platers[0].multi_hs, mode);
         }
-  
-        platers[0] = Plater(0, spr_1, 50, 60, 106, 2, s_hs, m_hs, mode);
-
-        s_hs = 0;
-        m_hs = 0;
+        else {
+            platers[0] = Plater(0, spr_1, 50, 60, 106, 2, 0, 0, mode, -1);
+        }
 
         if (platers[1] !== -1) {
-            m_hs = platers[1].multi_hs;
+            platers[1] = Plater(1, spr_2, 70, 60, 106, 1, 0, platers[1].multi_hs, "Multiplayer VS");
         }
         else if (p2_storage !== -1) {
-            m_hs = p2_storage;
+            platers[1] = Plater(1, spr_2, 70, 60, 106, 1, 0, p2_storage, "Multiplayer VS");
             p2_storage = -1;
         }
-
-        platers[1] = Plater(1, spr_2, 70, 60, 106, 1, 0, m_hs, "Multiplayer VS");
+        else {
+            platers[1] = Plater(1, spr_2, 70, 60, 106, 1, 0, 0, "Multiplayer VS");
+        }
 
         singleplater = false;
     }
@@ -47,11 +41,11 @@ export function setUpPlaters(spr_1, spr_2, mode) {
         }
 
         if (platers[0] !== -1) {
-            s_hs = platers[0].single_hs;
-            m_hs = platers[0].multi_hs;
-            platers[0] = Plater(0, spr_1, 60, 60, 106, 2, s_hs, m_hs, mode);
+            platers[0] = Plater(0, spr_1, 60, 60, 106, 2, platers[0].single_hs, platers[0].multi_hs, mode);
         }
-
+        else {
+            platers[0] = Plater(0, spr_1, 60, 60, 106, 2, 0, 0, mode);
+        }
         singleplater = true;
     }
 }
