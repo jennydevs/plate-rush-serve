@@ -16,8 +16,9 @@ var game_start = true;
 var game_end = false;
 var game_pause = false;
 var evaluated_score = false;
+var pause_timer = false;
 
-calcCenterOffset();
+// calcCenterOffset();
 createScoring();
 addCharacters();
 setColors();
@@ -68,7 +69,9 @@ exports.update = function () {
                 drawEnd();
             }
 
-            game_end = gameTimer();
+            if (!pause_timer) {
+                game_end = gameTimer();
+            }
         } 
         else if (game_pause) {
             if (btnp.enter) {
@@ -94,3 +97,7 @@ exports.update = function () {
         drawStart();
     }
  };
+
+ export function pauseTimer(p_timer) {
+    pause_timer = p_timer;
+ }

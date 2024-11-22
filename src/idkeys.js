@@ -259,14 +259,33 @@ export const score = {
 export const menu_options = [
     "Game Type",
     "Character Select",
+    "Timer",
 ];
 
 export const game_type_options = [
     "Singleplayer",
     "Multiplayer VS",
-    // "Multiplayer CO-OP",
 ];
 
+export const game_times = [ // In minutes
+    0.5,
+    1,
+    2,
+    3,
+    4,
+    5,
+    "endless"
+];
+
+export const game_times_strs = [
+    "0:30",
+    "1:00",
+    "2:00",
+    "3:00",
+    "4:00",
+    "5:00",
+    "endless"
+];
 
 export let character_list = [
     126,

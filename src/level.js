@@ -2,13 +2,25 @@ import { resetPlayers } from "./player.js";
 import { resetNPCS } from "./npc.js";
 import { resetItems } from "./item.js";
 import { resetBelts } from "./belt.js";
-import { drawRect, centerText } from "./menu.js";
+import { drawRect, centerText} from "./menu.js";
+import { pauseTimer } from "./main.js";
 
-let og_game_timer = 10800; // 3 min
+let og_game_timer = 0;
 let game_timer = og_game_timer; // 18000 = 5 minutes
 let end_game = 0;
 
 let center_x = centerText("0:00"); // max of 9:59 for now
+
+export function setUpGame(timer) {
+    if (timer == "endless") {
+        pauseTimer(true);
+    }
+    else { 
+        og_game_timer = timer * 60 * 60; 
+        game_timer = og_game_timer;
+        pauseTimer(false);
+    }
+}
 
 export function gameTimer() {
     if (game_timer >= end_game) {
@@ -36,8 +48,8 @@ function drawTimer(minutes, seconds) {
             : print(Math.floor(minutes) + ":0" + Math.floor(seconds), center_x, 1);
 }
 
-export function resetGame() {
-    resetPlayers();
+export function resetGame(game_end) {
+    resetPlayers(game_end);
     resetNPCS();
     resetItems();
     resetBelts();

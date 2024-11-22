@@ -1,6 +1,7 @@
 import { setUpPlaters, platers, sendWinner } from "./player.js";
-import { menu_options, game_type_options, character_list } from "./idkeys.js";
+import { menu_options, game_type_options, character_list, game_times, game_times_strs } from "./idkeys.js";
 import { map_title, map_pause, map_title_bg } from "./map.js";
+import { setUpGame } from "./level.js";
 
 var scores = [];
 var tied_score = [];
@@ -106,7 +107,7 @@ function loopSelection(choice, options, left, right) {
 }
 
 
-let choices = [0, 0, [0,0]]; // up/down / left/right / char select
+let choices = [0, 0, [0,0], 0]; // up/down / left/right  timer / char select
 let singleplater = game_type_options[choices[1]] == "Singleplayer"? true : false;
 
 export function updateStart() {
@@ -114,6 +115,9 @@ export function updateStart() {
 
     if (choices[0] == 0) { // GAME MODE
         choices[1] = switchOptions(choices[1], game_type_options);
+    }
+    if (choices[0] == 2) { // TIMER
+        choices[3] = switchOptions(choices[3], game_times);
     }
 
     singleplater = game_type_options[choices[1]] == "Singleplayer" ? true : false;
@@ -124,35 +128,36 @@ export function updateStart() {
         
         if (btnp.enter) {
             if (game_type_options[choices[1]] == "Singleplayer") {
+                singleplater = true;
                 setUpPlaters(character_list[choices[2][0]], -1, game_type_options[choices[1]], -1);
+                setUpGame(game_times[choices[3]]);
             }
             else {
                 singleplater = false;
                 setUpPlaters(character_list[choices[2][0]], character_list[choices[2][1]], game_type_options[choices[1]], -1);
+                setUpGame(game_times[choices[3]]);
             }
             return [false, true]; // game start, and loop
         }
     }
-
+    
     return [true, false];
 }
-
-const strings = [
-    "Press Enter to start",
-    menu_options[0],
-    menu_options[1],
-];
 
 let offsets = [];
 
 export function calcCenterOffset() {
-    for (let i = 0; i < strings.length; i++) {
-        offsets.push(centerText(strings[i]));
-    }
+    // for (let i = 0; i < strings.length; i++) {
+    //     offsets.push(centerText(strings[i]));
+    // }
 
-    for (let j = 0; j < game_type_options.length; j++) {
-        offsets.push(centerText(game_type_options[j]));
-    }
+    // for (let j = 0; j < game_type_options.length; j++) {
+    //     offsets.push(centerText(game_type_options[j]));
+    // }
+
+    // for (let k = 0; k < game_times.length; k++) {
+    //     offsets.push(centerText(("" + game_times[k])));
+    // }
 }
 
 export function drawStart() { // real messy
@@ -166,56 +171,69 @@ export function drawStart() { // real messy
 
     let top = start_y + (offset_y * 2);
 
-    if (choices[0] == 0) {
-        drawRect(strings[1], offsets[1], start_y + (offset_y * 2));
-        print(strings[1], offsets[1], start_y + (offset_y * 2));
+    if (choices[0] == 0) { // MENU OPTIONS
+        let str = menu_options[0];
+        let x = centerText(str);
+        drawRectAndTextNoCenter(str, x, top); // top line
+
         offset_y += h * 2;
-        sprite(131, offsets[choices[1] + strings.length] - 8, start_y + offset_y - 2, true);
-        sprite(131, game_type_options[choices[1]].length * 4 + offsets[choices[1] + strings.length] - 1, start_y + offset_y - 2);
-        drawRect(game_type_options[choices[1]], offsets[choices[1] + strings.length], start_y + offset_y);
-        print(game_type_options[choices[1]], offsets[choices[1] + strings.length], start_y + offset_y); // watch this choice
+
+        let game_choice = game_type_options[choices[1]];
+        sprite(131, centerText(game_choice) - 8, start_y + offset_y - 2, true);
+        sprite(131, centerText(game_choice) + game_choice.length * 4 - 1, start_y + offset_y - 2)
+        drawRectAndText(game_choice, start_y + offset_y);
+
         sprite(131, centerText("I") - 2, start_y + offset_y + 7, false, false, true);
     }
-    else if (choices[0] == 1) {
+    else if (choices[0] == 2) { // TIMER
+        let str = menu_options[2];
+        let x = centerText(str);
+        drawRectAndTextNoCenter(str, x, top); // top line
+
+        offset_y += h * 2;
+
+        let game_choice = game_times_strs[choices[3]];
+        sprite(131, centerText(game_choice) - 8, start_y + offset_y - 2, true);
+        sprite(131, centerText(game_choice) + game_choice.length * 4 - 1, start_y + offset_y - 2)
+        drawRectAndText(game_choice, start_y + offset_y);
+
+        sprite(131, centerText("I") - 2, start_y + offset_y + 7, false, false, true);
+    }
+    else if (choices[0] == 1) { // CHARACTER
         if (game_type_options[choices[1]] == "Singleplayer") {
             sprite(131, 53, 85, true);
             sprite(131, 69, 85);
 
-            drawRect("P1", 61, 78);
-            print ("P1", 61, 78);
+            drawRectAndTextNoCenter("P1", 61, 78);
             sprite(136, 61, 85);
             sprite(character_list[choices[2][0]], 61, 85);
 
-            drawRect(strings[2], offsets[2], top);
-            print(strings[2], offsets[2], top);
+            drawRectAndText(menu_options[1], top);
             offset_y += h * 2;
-            drawRect(strings[0], offsets[0], start_y + offset_y);
-            print(strings[0], offsets[0], start_y + offset_y);
+            drawRectAndText("Press Enter To Start", start_y + offset_y)
         }
         else {
             sprite(131, 21, 85, true);
             sprite(131, 39, 85);
+            drawRectAndTextNoCenter("P1", 31, 78);
 
             sprite(131, 81, 85, true);
             sprite(131, 99, 85);
+            drawRectAndTextNoCenter("P2", 91, 78);
 
-            drawRect("P1", 31, 78);
-            drawRect("P2", 91, 78);
-            print ("P1", 31, 78);
-            print ("P2", 91, 78);
             sprite(136, 30, 85);
-            sprite(136, 90, 85);
             sprite(character_list[choices[2][0]], 30, 85);
+
+            sprite(136, 90, 85);
             sprite(character_list[choices[2][1]], 90, 85);
 
-            drawRect(strings[2], offsets[2], top);
-            print(strings[2], offsets[2], top);
+            drawRectAndText(menu_options[1], top);
 
             offset_y += h * 2;
-            drawRect(strings[0], offsets[0], start_y + offset_y);
-            print(strings[0], offsets[0], start_y + offset_y);
+            drawRectAndText("Press Enter To Start", start_y + offset_y);
         }
-        sprite(131, centerText("I") - 2, start_y + offset_y + 7, false, false, true);
+
+        sprite(131, centerText("I") - 2, start_y + offset_y + 7, false, false, true); // down arrow
     }
 }
 
@@ -326,4 +344,15 @@ function drawRectAndOffset(str, offset_y, h) {
     offset_y += h;
 
     return offset_y;
+}
+
+function drawRectAndText(str, offset_y) {
+    let x = centerText(str);
+    drawRect(str, x, offset_y);
+    print(str, x, offset_y);
+}
+
+function drawRectAndTextNoCenter(str, x, offset_y) {
+    drawRect(str, x, offset_y);
+    print(str, x, offset_y);
 }
