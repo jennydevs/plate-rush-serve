@@ -107,7 +107,13 @@ function loopSelection(choice, options, left, right) {
 }
 
 
-let choices = [0, 0, [0,0], 0]; // up/down / left/right  timer / char select
+let choices = {
+    0: 0, // up / down
+    1: 0, // left /right
+    2: [0,0], // char select
+    3: 0, // timer
+}
+
 let singleplater = game_type_options[choices[1]] == "Singleplayer"? true : false;
 
 export function updateStart() {
@@ -171,7 +177,9 @@ export function drawStart() { // real messy
 
     let top = start_y + (offset_y * 2);
 
-    if (choices[0] == 0) { // MENU OPTIONS
+    let choice = choices[0];
+
+    if (choice == 0) { // MENU OPTIONS
         let str = menu_options[0];
         let x = centerText(str);
         drawRectAndTextNoCenter(str, x, top); // top line
@@ -182,10 +190,8 @@ export function drawStart() { // real messy
         sprite(131, centerText(game_choice) - 8, start_y + offset_y - 2, true);
         sprite(131, centerText(game_choice) + game_choice.length * 4 - 1, start_y + offset_y - 2)
         drawRectAndText(game_choice, start_y + offset_y);
-
-        sprite(131, centerText("I") - 2, start_y + offset_y + 7, false, false, true);
     }
-    else if (choices[0] == 2) { // TIMER
+    else if (choice == 2) { // TIMER
         let str = menu_options[2];
         let x = centerText(str);
         drawRectAndTextNoCenter(str, x, top); // top line
@@ -196,23 +202,27 @@ export function drawStart() { // real messy
         sprite(131, centerText(game_choice) - 8, start_y + offset_y - 2, true);
         sprite(131, centerText(game_choice) + game_choice.length * 4 - 1, start_y + offset_y - 2)
         drawRectAndText(game_choice, start_y + offset_y);
-
-        sprite(131, centerText("I") - 2, start_y + offset_y + 7, false, false, true);
     }
-    else if (choices[0] == 1) { // CHARACTER
+    else if (choice== 1) { // CHARACTER
         if (game_type_options[choices[1]] == "Singleplayer") {
+            let p1 = character_list[choices[2][0]];
+            let menu_op = menu_options[1];
             sprite(131, 53, 85, true);
             sprite(131, 69, 85);
 
             drawRectAndTextNoCenter("P1", 61, 78);
             sprite(136, 61, 85);
-            sprite(character_list[choices[2][0]], 61, 85);
+            sprite(p1, 61, 85);
 
-            drawRectAndText(menu_options[1], top);
+            drawRectAndText(menu_op, top);
             offset_y += h * 2;
             drawRectAndText("Press Enter To Start", start_y + offset_y)
         }
         else {
+            let p1 = character_list[choices[2][0]];
+            let p2 = character_list[choices[2][1]]
+            let menu_op = menu_options[1];
+
             sprite(131, 21, 85, true);
             sprite(131, 39, 85);
             drawRectAndTextNoCenter("P1", 31, 78);
@@ -222,19 +232,18 @@ export function drawStart() { // real messy
             drawRectAndTextNoCenter("P2", 91, 78);
 
             sprite(136, 30, 85);
-            sprite(character_list[choices[2][0]], 30, 85);
+            sprite(p1, 30, 85);
 
             sprite(136, 90, 85);
-            sprite(character_list[choices[2][1]], 90, 85);
+            sprite(p2, 90, 85);
 
-            drawRectAndText(menu_options[1], top);
+            drawRectAndText(menu_op, top);
 
             offset_y += h * 2;
             drawRectAndText("Press Enter To Start", start_y + offset_y);
         }
-
-        sprite(131, centerText("I") - 2, start_y + offset_y + 7, false, false, true); // down arrow
     }
+    sprite(131, centerText("I") - 2, start_y + offset_y + 7, false, false, true); // down arrow
 }
 
 export function evaluateScores() {
