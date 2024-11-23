@@ -258,8 +258,8 @@ export const score = {
 
 export const menu_options = [
     "Game Type",
-    "Character Select",
     "Timer",
+    "Character Select",
 ];
 
 export const game_type_options = [

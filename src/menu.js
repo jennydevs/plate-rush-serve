@@ -118,17 +118,18 @@ let singleplater = game_type_options[choices[1]] == "Singleplayer"? true : false
 
 export function updateStart() {
     choices[0] = switchMenus(choices[0], menu_options);
+    let option = menu_options[choices[0]];
 
-    if (choices[0] == 0) { // GAME MODE
+    if (option == "Game Type") {
         choices[1] = switchOptions(choices[1], game_type_options);
     }
-    if (choices[0] == 2) { // TIMER
+    if (option == "Timer") {
         choices[3] = switchOptions(choices[3], game_times);
     }
 
     singleplater = game_type_options[choices[1]] == "Singleplayer" ? true : false;
 
-    if (choices[0] == 1) { // CHARACTER
+    if (option == "Character Select") {
         choices[2][0] = swapCharacters(1, choices[2][0], singleplater, character_list);
         choices[2][1] = swapCharacters(2, choices[2][1], singleplater, character_list);
         
@@ -178,19 +179,20 @@ export function drawStart() { // real messy
     let top_line = start_y + (offset_y * 2);
 
     let choice = choices[0];
+    let option = menu_options[choice];
     let str = "";
     let game_choice = "";
 
-    if (choice == 0) {
+    if (option == "Game Type") {
         str = menu_options[0];
         game_choice = game_type_options[choices[1]];
     }
-    else if (choice == 2) {
-        str = menu_options[2];
+    else if (option == "Timer") {
+        str = menu_options[1];
         game_choice = game_times_strs[choices[3]];
     }
-    else if (choice == 1) {
-        str = menu_options[1];
+    else if (option == "Character Select") {
+        str = menu_options[2];
         game_choice = game_type_options[choices[1]];
     }
 
@@ -199,12 +201,12 @@ export function drawStart() { // real messy
     offset_y += h * 2;
     let switchable_choices_offset = start_y + offset_y;
     
-    if (choice !== 1) {
+    if (option !== "Character Select") {
         sprite(131, centerText(game_choice) - 8, switchable_choices_offset - 2, true);
         sprite(131, centerText(game_choice) + game_choice.length * 4 - 1, switchable_choices_offset - 2);
         drawRectAndText(game_choice, start_y + offset_y);
     }
-    else if (choice== 1) { // CHARACTER
+    else if (option == "Character Select") {
         let p1 = character_list[choices[2][0]];
         drawRectAndText("Press Enter To Start", start_y + offset_y);
 
