@@ -14,26 +14,21 @@ let p2_storage = -1;
 let p2_wins = -1;
 
 export function setUpPlaters(spr_1, spr_2, mode, winner) {
+    let win = 0;
     if (spr_2 !== -1) { 
         if (platers[0] !== -1) {
-            if (winner !== -1 && winner == platers[0].id) {
-                platers[0] = Plater(0, spr_1, 50, 60, 106, 2, platers[0].single_hs, platers[0].multi_hs, mode, platers[0].wins + 1);
-            }
-            else {
-                platers[0] = Plater(0, spr_1, 50, 60, 106, 2, platers[0].single_hs, platers[0].multi_hs, mode, platers[0].wins);
-            }
+            if (winner == platers[0].id) { win = 1; }
+            platers[0] = Plater(0, spr_1, 50, 60, 106, 2, platers[0].single_hs, platers[0].multi_hs, mode, platers[0].wins + win);
+            win = 0;
         }
-        else {
+        else { // new game
             platers[0] = Plater(0, spr_1, 50, 60, 106, 2, 0, 0, mode, 0);
         }
 
         if (platers[1] !== -1) { // move to new one
-            if (winner !== -1 && winner == platers[1].id) {
-                platers[1] = Plater(1, spr_2, 70, 60, 106, 1, 0, platers[1].multi_hs, "Multiplayer VS", platers[1].wins + 1);
-            }
-            else {
-                platers[1] = Plater(1, spr_2, 70, 60, 106, 1, 0, platers[1].multi_hs, "Multiplayer VS", platers[1].wins);
-            }
+            if (winner == platers[1].id) { win = 1 };
+            platers[1] = Plater(1, spr_2, 70, 60, 106, 1, 0, platers[1].multi_hs, "Multiplayer VS", platers[1].wins + win);
+            win = 0;
         }
         else if (p2_storage !== -1) { // changed settings from singleplayer
             platers[1] = Plater(1, spr_2, 70, 60, 106, 1, 0, p2_storage, "Multiplayer VS", p2_wins);
@@ -575,12 +570,16 @@ function drawFrontOfPlayer(p) {
 var winner = -1;
 
 export function resetPlayers(game_end) {
-    if (game_end) {
-        setUpPlaters(platers[0].spr, platers[1].spr, platers[0].mode, winner);
+    let winning = -1;
+    let p2 = -1;
+
+    if (platers[0].mode != "Singleplayer") {
+        p2 = platers[1].spr;
     }
-    else {
-        setUpPlaters(platers[0].spr, platers[1].spr, platers[0].mode, -1);
-    }
+
+    if (!game_end) { winning = winner; }
+
+    setUpPlaters(platers[0].spr, p2, platers[0].mode, winning);
 
     winner = -1;
 }
