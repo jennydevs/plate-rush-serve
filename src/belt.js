@@ -100,18 +100,18 @@ export function beltMoveItems() {
     }
 
     let b_items = {};
-    let b_counter = 0;
+    // let b_counter = 0;
 
     for (const [key, belt] of Object.entries(belts)) {
         if (items[key] !== undefined && items[key] !== -1) {
             b_items[key] = items[key];
-            b_counter++;
+            // b_counter++;
         }
     }
 
-    if (b_counter == 0) { // could do bool
-        return;
-    }
+    // if (b_counter == 0) { // commented so player moves on an empty belt
+    //     return;
+    // }
 
     b_items = npcCheck(b_items); 
 
