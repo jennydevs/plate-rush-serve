@@ -393,6 +393,19 @@ export function placeItem(item, spot) {
 	setItemToMap(item.on_counter, item.spr, item.x, item.y);
 }
 
+function pourIngredientsIn(held_item, check_item) {
+	for (let i = 0; i < held_item.contents.length; i++) {
+		check_item.contents.push(held_item.contents[i]);
+	}
+
+	check_item.spr = item_key[check_item.subtype + "_full"];
+	
+	setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
+	check_item.full = true;
+
+	return {"held_item": trashCanSpot(true, held_item), "check_item": check_item};
+}
+
 
 function interactSpot(p_id, tile_key, holding_item, held_item) {
 	let spot = item_tiles[tile_key];
@@ -407,18 +420,23 @@ function interactSpot(p_id, tile_key, holding_item, held_item) {
 			let check_item = getItem(spot.x, spot.y);
 
 			if (check_item.type == "cookery") {
-				if (held_item.type == "cookery"
-					|| held_item.type == "book"
+				if (held_item.type == "book"
 					|| held_item.subtype == "food") {
 					return held_item;
 				}
 
-				if (held_item.subtype == "plate") {
+				if (held_item.type == "cookery" && !held_item.cooked && !held_item.burned 
+					&& !check_item.cooked && !check_item.burned && held_item.contents.length > 0) {
+					let result = pourIngredientsIn(held_item, check_item);
+					held_item = result.held_item;
+					check_item = result.check_item;
+				}
+				else if (held_item.subtype == "plate") {
 					let result = plateFood(p_id, held_item, check_item);
 					held_item = result.held_item;
 					check_item = result.check_item;
 				}
-				else {
+				else if (held_item.type !== "cookery") {
 					let result = putIngredientIn(held_item, check_item);
 					held_item = result.held_item;
 					check_item = result.check_item;
