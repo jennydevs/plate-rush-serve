@@ -72,22 +72,24 @@ function swapCharacters(player, choice, singleplayer, options) {
         left = (btnp.a || btnp.left) && not_left;
         right = (btnp.d || btnp.right) && not_right;
     }
-    else if (player == 1) {
-        not_left = !btnp.left && !btnp.right && !btnp.d;
-        not_right = !btnp.right && !btnp.left && !btnp.a;
-        left = btnp.a;
-        right = btnp.d;
-
-        left = left && not_left;
-        right = right && not_right;
-    }
-    else if (player == 2){
-        not_left = !btnp.a && !btnp.right && !btnp.d;
-        not_right = !btnp.d && !btnp.left && !btnp.a;
-        left = btnp.left;
-        right = btnp.right;
-        left = left && not_left;
-        right = right && not_right;
+    else {
+        if (player == 1) {
+            not_left = !btnp.left && !btnp.right && !btnp.d;
+            not_right = !btnp.right && !btnp.left && !btnp.a;
+            left = btnp.a;
+            right = btnp.d;
+    
+            left = left && not_left;
+            right = right && not_right;
+        }
+        else if (player == 2){
+            not_left = !btnp.a && !btnp.right && !btnp.d;
+            not_right = !btnp.d && !btnp.left && !btnp.a;
+            left = btnp.left;
+            right = btnp.right;
+            left = left && not_left;
+            right = right && not_right;
+        }
     }
 
     return loopSelection(choice, options, left, right);
@@ -131,7 +133,9 @@ export function updateStart() {
 
     if (option == "Character Select") {
         choices[2][0] = swapCharacters(1, choices[2][0], singleplater, character_list);
-        choices[2][1] = swapCharacters(2, choices[2][1], singleplater, character_list);
+        if (!singleplater) {
+            choices[2][1] = swapCharacters(2, choices[2][1], singleplater, character_list);
+        }
         
         if (btnp.enter) {
             if (game_type_options[choices[1]] == "Singleplayer") {
@@ -149,22 +153,6 @@ export function updateStart() {
     }
     
     return [true, false];
-}
-
-let offsets = [];
-
-export function calcCenterOffset() {
-    // for (let i = 0; i < strings.length; i++) {
-    //     offsets.push(centerText(strings[i]));
-    // }
-
-    // for (let j = 0; j < game_type_options.length; j++) {
-    //     offsets.push(centerText(game_type_options[j]));
-    // }
-
-    // for (let k = 0; k < game_times.length; k++) {
-    //     offsets.push(centerText(("" + game_times[k])));
-    // }
 }
 
 export function drawStart() { // real messy
