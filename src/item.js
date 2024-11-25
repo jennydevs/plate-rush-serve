@@ -396,7 +396,7 @@ function interactSpot(p_id, tile_key, holding_item, held_item) {
 			if (check_item.type == "cookery") {
 				if (held_item.type == "cookery"
 					|| held_item.type == "book"
-					|| held_item.type == "food") {
+					|| held_item.subtype == "food") {
 					return held_item;
 				}
 
