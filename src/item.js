@@ -179,8 +179,8 @@ function addItemTileIds() {
 
 					if (counter_check.sprite == spots.counter 
 						|| counter_check.sprite == spots.side_counter
-						|| tile.sprite == spots.belt_outer_table
-						|| tile.sprite == spots.belt_table) {
+						|| counter_check.sprite == spots.belt_outer_table
+						|| counter_check.sprite == spots.belt_table) {
 						tile_spot.is_counter = true;
 					}
 
