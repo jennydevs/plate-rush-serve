@@ -139,6 +139,8 @@ export function addItem(item_spr, spot, score) {
 		else {
 			item.chef = -1;
 		}
+
+		item.type = "ingredient";
 	}
 
 	if (spot == -1) { // give item directly
@@ -291,6 +293,17 @@ function plateFood(p_id, held_item, check_item) {
 			}
 		}
 	}
+	else if (check_item.type == "ingredient") {
+		for (const [key, ingredient] of Object.entries(one_ingredient_recipes)) {
+			if (ingredient == check_item.spr) {
+				held_item.spr = item_key[key];
+				held_item.subtype = "food";
+				held_item.chef = p_id;
+				removeItemFromMap(check_item.on_counter, check_item.x, check_item.y);
+				return {"held_item": held_item, "check_item": -1};
+			}
+		}
+	}
 
 	return {"held_item": held_item, "check_item": check_item};
 }
@@ -410,17 +423,21 @@ function interactSpot(p_id, tile_key, holding_item, held_item) {
 					held_item = result.held_item;
 					check_item = result.check_item;
 				}
-
-				return held_item;
 			}
-
-			if (check_item.subtype == "plate") {
+			else if (check_item.subtype == "plate") {
 				let result = plateFood(p_id, held_item, check_item);
 				held_item = result.held_item;
 				check_item = result.check_item;
-
-				return held_item;
 			}
+			else if (check_item.type == "ingredient") {
+				if (held_item.subtype == "plate") {
+					let result = plateFood(p_id, held_item, check_item);
+					held_item = result.held_item;
+					check_item = result.check_item;
+				}
+			}
+
+			return held_item;
 		}
 	}
 
