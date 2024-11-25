@@ -157,12 +157,11 @@ export function updateNPC() {
                         table.current_people--;
                         table.people_served--;
 
-                        let tile = getMapTile(map_item, npc.front[0], npc.front[1]);
                         if (checkCanPickUp(item_tiles[getItemKey(npc.front[0], npc.front[1])])) {
                             removeItem(npc.front[0], npc.front[1]);
                         }
 
-                        addItem(score.money, item_tiles[getItemKey(tile.x, tile.y)], npc.order.pay);
+                        addItem(score.money, item_tiles[getItemKey(npc.front[0], npc.front[1])], npc.order.pay, true);
 
                         if (table.current_people == 0) {
                             open_table_seats.push(npc.seat_num);
@@ -736,29 +735,26 @@ export function npcCheck(belt_items) {
                             b = -1;
                         };
 
-                        addItem(score.money, item_tiles[bid], npc.order.pay);
-
+                        addItem(score.money, item_tiles[bid], npc.order.pay, true);
                         b = items[getItemKey(b.x, b.y)];
                         open_single_seats.push(npc.seat_num);
                     }
                     else {
-                        let tile = getMapTile(map_item, npc.front[0], npc.front[1]);
-
                         let table = tables[npc.seat_num];
                         table.people_served++;
     
-                        let table_item = items[getItemKey(tile.x, tile.y)];
-                        if (table_item !== undefined || table_item !== -1) { removeItem(table_item); } // remove items on table before serving
+                        let table_item = items[getItemKey(npc.front[0], npc.front[1])];
+                        if (table_item !== undefined && table_item !== -1) { removeItem(table_item); } // remove items on table before serving
     
                         addScore(b.chef, npc.order.pay);
-                        addItem(b.spr, tile, {"chef": b.chef});
+                        addItem(b.spr, item_tiles[getItemKey(npc.front[0], npc.front[1])], {"chef": b.chef}, false);
 
                         if (checkCanPickUp(item_tiles[getItemKey(b.x, b.y)])) {
                             removeItem(b.x, b.y);
                         }
     
                         belt_items[key] = -1; // no double orders for the table
-                        b = -1; // no double orders for the table
+                        b = -1;
                     }
                 }
             }

@@ -26,12 +26,12 @@ export function spawnBeltItems() {
 }
 
 function spawnSpotItems() {
-	addItem(item_key["pot"], item_tiles[getItemKey(7,9)], -1);
-	addItem(item_key["fry_tray"], item_tiles[getItemKey(8,9)], -1);
-	addItem(item_key["pot"], item_tiles[getItemKey(9, 9)], -1);
-	addItem(item_key["fryer_book"], item_tiles[getItemKey(6,9)], -1);
-	addItem(item_key["stove_book"], item_tiles[getItemKey(5, 9)], -1);
-	addItem(item_key["infinite_plates"], item_tiles[getItemKey(6, 6)], -1);
+	addItem(item_key["pot"], item_tiles[getItemKey(7,9)], -1, true);
+	addItem(item_key["fry_tray"], item_tiles[getItemKey(8,9)], -1, true);
+	addItem(item_key["pot"], item_tiles[getItemKey(9, 9)], -1, true);
+	addItem(item_key["fryer_book"], item_tiles[getItemKey(6,9)], -1, true);
+	addItem(item_key["stove_book"], item_tiles[getItemKey(5, 9)], -1, true);
+	addItem(item_key["infinite_plates"], item_tiles[getItemKey(6, 6)], -1, true);
 }
 
 export function setItemToMap(on_counter, spr, x, y) {
@@ -47,7 +47,7 @@ function clearItemMaps() {
 	clearMap(map_floor_item);
 }
 
-function Item(item_spr) {
+function Item(item_spr, pickable) {
 	return {
 		"name": key_name[item_spr],
 		"spr": item_spr,
@@ -58,15 +58,16 @@ function Item(item_spr) {
 		"y": -8,
 		"type": "",
 		"subtype": "",
+		"pickable": pickable,
 	};
 }
 
-export function addItem(item_spr, spot, score) {
+export function addItem(item_spr, spot, score, pickable) {
 	if (spot == undefined) {
 		return;
 	}
 
-	let item = Item(item_spr);
+	let item = Item(item_spr, pickable);
 
 	if (spot !== -1) {
 		item.current_tile = getItemKey(spot.x, spot.y);
@@ -341,12 +342,12 @@ function putIngredientIn(held_item, check_item) {
 function pickUpItem(spot) {
 	let front_item = getItem(spot.x, spot.y);
 
-	if (front_item == undefined || front_item == -1) {
+	if (front_item == undefined || front_item == -1 || !front_item.pickable) {
 		return -1;
 	}
 
 	if (front_item.spr == item_key["infinite_plates"]) {
-		return addItem(item_key["plate"], -1, -1);
+		return addItem(item_key["plate"], -1, -1, true);
 	}
 
 	removeItem(front_item.x, front_item.y);
@@ -469,6 +470,7 @@ function interactSpot(p_id, tile_key, holding_item, held_item) {
 
 	if (!holding_item 
 		&& checkCanPickUp(spot)) {
+
 		held_item = pickUpItem(spot);
 
 		return held_item;
@@ -505,7 +507,7 @@ export function grabStorageItem(storage_id, pid) {
 	const storage = storages[storage_id];
 	storage.open = false;
 
-	return addItem(storage.contents[storage.current_selection], -1, {"chef": pid});
+	return addItem(storage.contents[storage.current_selection], -1, {"chef": pid}, true);
 }
 
 export function leaveStorage(storage_id) {

@@ -7,7 +7,7 @@ import {
     updatePlayers, drawPlayers, 
     drawHand, drawPlayersOnTop, drawPlayerFront, drawScore
 } from "./player.js";
-import { drawStart, drawEnd, drawPause, updateStart, calcCenterOffset, resetChoices, evaluateScores } from "./menu.js";
+import { drawStart, drawEnd, drawPause, updateStart, resetChoices, evaluateScores } from "./menu.js";
 import { resetGame, gameTimer } from "./level.js";
 import { addCharacters, createScoring } from "./idkeys.js";
 
@@ -18,7 +18,6 @@ var game_pause = false;
 var evaluated_score = false;
 var pause_timer = false;
 
-// calcCenterOffset();
 createScoring();
 addCharacters();
 setColors();
