@@ -283,13 +283,25 @@ function plateFood(p_id, held_item, check_item) {
 		}
 	}
 	else if (check_item.subtype == "plate") {
-		for (const [key, ingredient] of Object.entries(one_ingredient_recipes)) {
-			if (ingredient == held_item.spr) {
-				check_item.spr = item_key[key];
-				check_item.subtype = "food";
-				check_item.chef = p_id;
-				setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
-				return {"held_item": -1, "check_item": check_item};
+		if (held_item.type == "cookery" && (held_item.cooked || held_item.burned)) {
+			check_item.spr = held_item.contents; // number
+			check_item.subtype = "food";
+			check_item.chef = held_item.chef;
+
+			setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
+
+			return {"held_item": trashCanSpot(true, held_item), "check_item": check_item};
+		}
+		
+		if (held_item.type == "ingredient"){
+			for (const [key, ingredient] of Object.entries(one_ingredient_recipes)) {
+				if (ingredient == held_item.spr) {
+					check_item.spr = item_key[key];
+					check_item.subtype = "food";
+					check_item.chef = p_id;
+					setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
+					return {"held_item": -1, "check_item": check_item};
+				}
 			}
 		}
 	}
