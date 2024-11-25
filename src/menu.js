@@ -342,8 +342,8 @@ export function drawPause() {
     let h = 8;
     let offset_y = 30;
     offset_y = drawRectAndOffset("ESC to return to game", offset_y, h);
-    offset_y = drawRectAndOffset("R or K to return to start", offset_y, h);
-    offset_y = drawRectAndOffset("Enter to Reset the Game", offset_y, h);
+    offset_y = drawRectAndOffset("R/K to return to start menu", offset_y, h);
+    offset_y = drawRectAndOffset("Enter to reset the game", offset_y, h);
 }
 
 function drawRectAndOffset(str, offset_y, h) {

@@ -185,9 +185,11 @@ export function movePlayer(dt, p) {
         else if (p.on_belt) {
             if (btn_right && !btn_left && !btn_c) { 
                 p.dir = direction.right;
+                p.flipped = false;
             }
             if (btn_left && !btn_right && !btn_c) { 
                 p.dir = direction.left;
+                p.flipped = true;
             }
             if (btn_up && !btn_down && !btn_c) { 
                 p.dir = direction.up;
@@ -266,15 +268,13 @@ export function movePlayer(dt, p) {
             }
         }
 
-        // From Monkey Warp Pixelbox by Cedric Stoquer
+        // Movement/Collision code adapted for top-down from Monkey Warp by Cedric Stoquer
         
         cx = cx + vx * dt;
         cy = cy + vy * dt;
 
         cx = horizontalCollide(vx, cx, p.py);
         cy = verticalCollide(vy, cy, p.px);
-
-        // END (movement code, but adapted for top-down)
     
         const limit = constrainBoundaries(cx, cy);
 
@@ -291,7 +291,7 @@ export function movePlayer(dt, p) {
             }
         }
         else {
-            p.on_counter = false; // keeps it somewhat right
+            p.on_counter = false;
         }
     
         if (p.holding_item) {
@@ -327,7 +327,7 @@ function horizontalCollide(vx, nx, py) {
     let hori_front = 8;
     let hori_offset = 0;
     
-    if (vx < 0) { // flip around
+    if (vx < 0) {
         hori_front = 0;
         hori_offset = 8;   
     }
@@ -357,7 +357,7 @@ function verticalCollide(vy, ny, px) {
     let vert_front = 8;
     let vert_offset = 0;
 
-    if (vy < 0) { // flip around
+    if (vy < 0) {
         vert_front = 0;
         vert_offset = 8;   
     }
@@ -470,7 +470,7 @@ function lookFront(tile, holding_item, held_item, px, py, p_id) {
 
 // DRAWING
 
-export function drawScore() { // 5 tall 3 wide
+export function drawScore() {
     let x = 30;
     let wx = 1;
 
@@ -552,7 +552,7 @@ function drawPlayerItem(p) {
     let holding_item = p.holding_item;
     let held_item = p.held_item;
 
-    if (holding_item) { // deal with pots and pans here
+    if (holding_item) {
         if (p.carrying_container) { drawItemsInContainer(held_item); }
         if (p.opened_book) { drawRecipe(held_item); }
 
