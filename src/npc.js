@@ -1,6 +1,6 @@
 import { npc_spots, npc_list, direction, drink_orders, food_orders, score, item_scores } from "./idkeys.js";
 import { getMapTile, map_item, map_npc, map_furniture } from "./map.js";
-import { checkCanPickUp, addItem, removeItem, item_tiles, items, getItemKey, resetSpot } from "./item.js";
+import { checkCanPickUp, addItem, removeItem, item_tiles, items, getItemKey } from "./item.js";
 import { addScore } from "./player.js";
 
 let npcs = [];
@@ -85,28 +85,27 @@ function createNPC() {
     let timer = 30;
     let table_seat = false;
 
-    if (dining_type == 0 
-        && open_single_seats.length != 0) {
-            random_seating = random(open_single_seats.length);
-            seating_id = open_single_seats[random_seating];
-            seating = single_seats[seating_id];
-            npc_amt = 1;
+    if (dining_type == 0 && open_single_seats.length != 0) {
+        random_seating = random(open_single_seats.length);
+        seating_id = open_single_seats[random_seating];
+        seating = single_seats[seating_id];
+        npc_amt = 1;
+        table_seat = false;
     }
-    else if (dining_type == 1 
-        && open_table_seats.length != 0) {
-            random_seating = random(open_table_seats.length);
-            seating_id = open_table_seats[random_seating];
-            seating = tables[seating_id];
+    else if (dining_type == 1 && open_table_seats.length != 0) {
+        random_seating = random(open_table_seats.length);
+        seating_id = open_table_seats[random_seating];
+        seating = tables[seating_id];
 
-            let seat_count = seating.group.seating_group.length;
-            npc_amt = Math.floor(Math.random() * ((seat_count + 1) - 2) + 2); // hmm
+        let seat_count = seating.group.seating_group.length;
+        npc_amt = Math.floor(Math.random() * ((seat_count + 1) - 2) + 2); // hmm
 
-            if (npc_amt > seat_count) { npc_amt = seat_count; }
+        if (npc_amt > seat_count) { npc_amt = seat_count; }
 
-            seating.current_people = npc_amt;
-            seating.people_served = 0;
+        seating.current_people = npc_amt;
+        seating.people_served = 0;
 
-            table_seat = true;
+        table_seat = true;
     }
 
     for (let i = 0; i < npc_amt; i++) {
@@ -135,11 +134,13 @@ function createNPC() {
         npcs.push(npc);
     }
 
-    if (!table_seat) {
-        open_single_seats.splice(random_seating, 1);
-    } 
-    else {
-        open_table_seats.splice(random_seating, 1);
+    if (npc_amt !== 0) {
+        if (!table_seat) {
+            open_single_seats.splice(random_seating, 1);
+        } 
+        else {
+            open_table_seats.splice(random_seating, 1);
+        }
     }
 }
 
@@ -164,7 +165,6 @@ export function updateNPC() {
                         addItem(score.money, item_tiles[getItemKey(tile.x, tile.y)], npc.order.pay);
 
                         if (table.current_people == 0) {
-                            table.full = false;
                             open_table_seats.push(npc.seat_num);
                         }
                     }
@@ -183,9 +183,6 @@ export function updateNPC() {
                 if (npc.prev_path.length == 1) { // just spawned
                     // npcs[i].x !== npcs[i].dx && npcs[i].y !== npcs[i].dy
                     let x_check = npc.dx - npc.x; // redo this
-
-                    // let y_check = npcs[i].dy - npcs[i].y; //use y
-                    // let y_check = npcs[i].dy - npcs[i].dx; // if some amount move upwards, or move downwards
 
                     npc.prev_path.push([npc.x, npc.y]);
 
@@ -621,7 +618,7 @@ function setUpSingleSeating() {
         }
     }
 }
-
+ 
 function setUpOpenSeats() {
     for (let i = 0; i < single_seats.length; i++) {
         open_single_seats.push(i); // ids are no good for chair since there are certain single seats that are separate from the seats group, order of index is different than id
@@ -777,14 +774,6 @@ export function resetNPCS() {
     open_table_seats = [];
 
     setUpOpenSeats();
-
-    for (let i = 0 ; i < tables.length; i++) {
-        tables[i].full = false;
-    }
-
-    for (let j = 0 ; j < single_seats.length; j++) {
-        single_seats[j].full = false;
-    }
 
     spawn_current_timer = 0;
 
