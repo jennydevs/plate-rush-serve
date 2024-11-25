@@ -417,6 +417,7 @@ function interactSpot(p_id, tile_key, holding_item, held_item) {
 		}
 
 		if (spot.full) {
+			let result = -1;
 			let check_item = getItem(spot.x, spot.y);
 
 			if (check_item.type == "cookery") {
@@ -427,32 +428,27 @@ function interactSpot(p_id, tile_key, holding_item, held_item) {
 
 				if (held_item.type == "cookery" && !held_item.cooked && !held_item.burned 
 					&& !check_item.cooked && !check_item.burned && held_item.contents.length > 0) {
-					let result = pourIngredientsIn(held_item, check_item);
-					held_item = result.held_item;
-					check_item = result.check_item;
+					result = pourIngredientsIn(held_item, check_item);
 				}
 				else if (held_item.subtype == "plate") {
-					let result = plateFood(p_id, held_item, check_item);
-					held_item = result.held_item;
-					check_item = result.check_item;
+					result = plateFood(p_id, held_item, check_item);
 				}
 				else if (held_item.type !== "cookery") {
-					let result = putIngredientIn(held_item, check_item);
-					held_item = result.held_item;
-					check_item = result.check_item;
+					result = putIngredientIn(held_item, check_item);
 				}
 			}
 			else if (check_item.subtype == "plate") {
-				let result = plateFood(p_id, held_item, check_item);
-				held_item = result.held_item;
-				check_item = result.check_item;
+				result = plateFood(p_id, held_item, check_item);
 			}
 			else if (check_item.type == "ingredient") {
 				if (held_item.subtype == "plate") {
-					let result = plateFood(p_id, held_item, check_item);
-					held_item = result.held_item;
-					check_item = result.check_item;
+					result = plateFood(p_id, held_item, check_item);
 				}
+			}
+
+			if (result !== -1) {
+				held_item = result.held_item;
+				check_item = result.check_item;
 			}
 
 			return held_item;
