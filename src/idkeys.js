@@ -1,5 +1,4 @@
 export const item_key = {
-    "bowl_full": 84,
     "fry_tray": 114,
     "fry_tray_burned": 116,
     "fry_tray_cooked": 117,
@@ -8,7 +7,6 @@ export const item_key = {
     "pot_cooked": 121,
     "pot_burned": 105,
     "pot_full": 120,
-    "bowl": 83,
     "plate": 91,
     "drink_book": 112,
     "fryer_book": 113,
@@ -21,6 +19,7 @@ export const item_key = {
     "egg_rice": 224,
 	"flan": 233,
     "fried_egg": 237,
+    "fried_meat": 238,
     "fried_shrimp": 225,
     "kebab": 234,
     "not_food": 236,
@@ -35,26 +34,19 @@ export const item_key = {
     "water": 163,
     "wine": 164,
     "apple": 198,
-    "butter": 177,
     "candy": 204,
     "cheese": 197,
-    "chocolate": 184,
     "cherry": 199,
-    "coffee_beans": 196,
 	"crab_meat": 185,
-    "cucumber": 176,
     "egg": 182,
     "flour": 195,
     "frosting": 186,
-    "oil": 191,
 	"sugar": 167,
     "ketchup": 183,
     "meat": 201,
     "milk": 162,
     "nori": 181,
-    "pepper": 189,
     "rice": 194,
-	"salt": 179,
     "shrimp": 192,
     "spring_onion": 190,
     "tomato": 188,
@@ -109,6 +101,7 @@ export const storage_type = {
 };
 
 export const fryer_recipes_order = [
+    "fried_meat",
     "fried_shrimp",
 ];
 
@@ -135,6 +128,7 @@ export const stove_recipes = {
 };
 
 export const fryer_recipes = {
+    "fried_meat": [item_key.meat, item_key.flour],
     "fried_shrimp": [item_key.shrimp, item_key.flour],
 };
 
@@ -158,18 +152,16 @@ export const liquid_fridge_contents = [
 ];
 
 export const solid_fridge_contents = [
-    item_key.butter,
-    item_key.cheese,
     item_key.crab_meat,
     item_key.egg,
     item_key.frosting,
     item_key.meat,
-    item_key.rice,
 	item_key.shrimp,
 ];
 
 export const dry_storage_contents = [
     item_key.candy,
+    item_key.cheese,
     item_key.flour,
     item_key.ketchup,
     item_key.nori,
@@ -180,6 +172,7 @@ export const veggie_fridge_contents = [
     item_key.apple,
     item_key.cherry,
     item_key.spring_onion,
+    item_key.rice,
     item_key.tomato,
 ];
 
@@ -190,16 +183,13 @@ export const veggie_fridge_contents = [
 export const npc_list = [
     78,
     79,
-    // 94,
     95,
     109,
     111,
-    // 124,
     125,
     141,
     142,
     143,
-    // 157,
     158,
     159,
 ];
@@ -212,6 +202,7 @@ export const food_orders = [
     item_key.egg_rice,
 	item_key.flan,
     item_key.fried_egg,
+    item_key.fried_meat,
     item_key.fried_shrimp,
     item_key.kebab,
 	item_key.pizza,
@@ -268,7 +259,6 @@ export const game_type_options = [
 ];
 
 export const game_times = [ // In minutes
-    0.5,
     1,
     2,
     3,
@@ -278,7 +268,6 @@ export const game_times = [ // In minutes
 ];
 
 export const game_times_strs = [
-    "0:30",
     "1:00",
     "2:00",
     "3:00",
@@ -292,9 +281,6 @@ export let character_list = [
     127,
     13,
     14,
-    // 94,
-    // 124,
-    // 157,
     236,
 ];
 
