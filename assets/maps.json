@@ -27,7 +27,7 @@
 			"h": 16,
 			"name": "floor",
 			"sheet": "tilesheet",
-			"data": "$o|^#<|4$o|0#<#Q#A#Q#A#Q#A#Q#A#<$o|0#<#A#Q#A#Q#A#Q#A#Q#<$o|0#<#Q#A#Q#A#Q#A#Q#A#<$o|0#<#A#Q#A#Q#A#Q#A#Q#<$o|0#<#Q#A#Q#A#Q#A#Q#A#<$o|0#<#A#Q#A#Q#A#Q#A#Q#<$o|0#<#Q#A#Q#A#Q#A#Q#A#<$o|0#<#A#Q#A#Q#A#Q#A#Q#<$o|0#<|4$o|^"
+			"data": "$o|_#<|2$o|1#<#Q#A#Q#A#Q#A#Q#A#<$o|0#<#A#Q#A#Q#A#Q#A#Q#<$o|0#<#Q#A#Q#A#Q#A#Q#A#<$o|0#<#A#Q#A#Q#A#Q#A#Q#<$o|0#<#Q#A#Q#A#Q#A#Q#A#<$o|0#<#A#Q#A#Q#A#Q#A#Q#<$o|0#<#Q#A#Q#A#Q#A#Q#A#<$o|0#<#A#Q#A#Q#A#Q#A#Q#<$o|1#<|2$o|_"
 		},
 		{
 			"w": 16,
@@ -69,7 +69,7 @@
 			"h": 16,
 			"name": "title",
 			"sheet": "tilesheet",
-			"data": "!!|_%Y%Z%[%]%^%_%`%a!!|2%b%c%d%e%f%g%h%i!!|2%9%:%;%<%=%>%?%@!!|2%A%B%C%D%E%F%G%H!!|2#d#e#f#g#h#i#j#k!!|2#w#x#y#z#{#|#}#m!!|2$'$($)$*$+$,$-$~!!|4$V$W$X$Y$Z$[!!| "
+			"data": "!!|[%7!!|,%Y%Z%[%]%^%_%`%a!!|2%b%c%d%e%f%g%h%i!!|2%9%:%;%<%=%>%?%@!!|2%A%B%C%D%E%F%G%H!!|2#d#e#f#g#h#i#j#k!!|2#w#x#y#z#{#|#}#m!!|2$'$($)$*$+$,$-$~!!|4$V$W$X$Y$Z$[!!| "
 		},
 		{
 			"w": 16,
