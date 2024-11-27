@@ -312,9 +312,9 @@ function plateFood(p_id, held_item, check_item) {
 				held_item.spr = item_key[key];
 				held_item.subtype = "food";
 				held_item.chef = p_id;
-				removeItemFromMap(check_item.on_counter, check_item.x, check_item.y);
 
-				item_tiles[getItemKey(check_item.x, check_item.y)].full = false;
+				removeItem(check_item.x, check_item.y);
+
 				return {"held_item": held_item, "check_item": -1};
 			}
 		}
