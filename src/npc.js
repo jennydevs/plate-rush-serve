@@ -687,7 +687,7 @@ export function drawNPC()  {
         else if (npcs[i].table_seat && npcs[i].served) {
             let flipped = false;
             if (npcs[i].dir == direction.left) { flipped = true };
-            sprite(npcs[i].spr, npcs[i].x * 8, npcs[i].y * 8, flipped);
+            sprite(npcs[i].spr, npcs[i].x * 8, npcs[i].y * 8 - 2, flipped);
         }
         else {
             sprite(npcs[i].spr, npcs[i].x * 8, npcs[i].y * 8);
