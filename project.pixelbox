@@ -1,5 +1,5 @@
 {
-	"name": "CornerDetective",
+	"name": "PlateRushServe",
 	"version": "2.1.0",
 	"appid": "G9afYZFhWCbKFIgb",
 	"screen": {
@@ -78,7 +78,7 @@
 		"miniText": true,
 		"keyboard": true,
 		"gamepad": true,
-		"AudioManager": true,
+		"AudioManager": false,
 		"patatracker": false,
 		"bleeper": false,
 		"TINA": false,
