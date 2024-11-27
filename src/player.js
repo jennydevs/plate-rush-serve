@@ -235,7 +235,12 @@ export function movePlayer(dt, p) {
                         cookTheItems(p.id, getItemKey(tile.x, tile.y));
                     }
                     else if (tile.sprite == spots.item_spot) {
-                        if (!p.opened_book) { // dont hop around when holding the book
+                        if (p.opened_book && p.on_belt) {
+                            p.on_belt = false;
+                            cx = p.front.fx;
+                            cy = p.front.fy;
+                        }
+                        else if (!p.opened_book) { // dont hop around when holding the book
                             p.on_belt = false;
                             cx = p.front.fx;
                             cy = p.front.fy;
