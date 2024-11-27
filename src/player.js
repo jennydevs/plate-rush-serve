@@ -577,7 +577,7 @@ export function resetPlayers(game_end) {
         p2 = platers[1].spr;
     }
 
-    if (!game_end) { winning = winner; }
+    if (game_end) { winning = winner; }
 
     setUpPlaters(platers[0].spr, p2, platers[0].mode, winning);
 
