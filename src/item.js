@@ -313,6 +313,8 @@ function plateFood(p_id, held_item, check_item) {
 				held_item.subtype = "food";
 				held_item.chef = p_id;
 				removeItemFromMap(check_item.on_counter, check_item.x, check_item.y);
+
+				item_tiles[getItemKey(check_item.x, check_item.y)].full = false;
 				return {"held_item": held_item, "check_item": -1};
 			}
 		}
@@ -461,7 +463,7 @@ function interactSpot(p_id, tile_key, holding_item, held_item) {
 
 			if (result !== -1) {
 				held_item = result.held_item;
-				check_item = result.check_item;
+				items[getItemKey(spot.x, spot.y)] = result.check_item;
 			}
 
 			return held_item;
