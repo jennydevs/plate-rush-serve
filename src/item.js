@@ -482,8 +482,10 @@ function interactSpot(p_id, tile_key, holding_item, held_item) {
 export function checkStorage(tile, holding_item) {
 	if (tile.sprite == spots.storage 
 		&& !holding_item) {
-		storages[getItemKey(tile.x, tile.y)].open = true;
-		return getItemKey(tile.x, tile.y);
+			if (!storages[getItemKey(tile.x, tile.y)].open) {
+				storages[getItemKey(tile.x, tile.y)].open = true;
+				return getItemKey(tile.x, tile.y);
+			}
 	}
 
 	return -1;
