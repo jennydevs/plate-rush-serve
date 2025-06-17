@@ -1,40 +1,44 @@
-import { direction, spots, cooking_utensil, storage_color, storage_type, 
-	cooked_food, book, stove_recipes, fryer_recipes, one_ingredient_recipes, 
-	liquid_fridge_contents, solid_fridge_contents, veggie_fridge_contents,
-	dry_storage_contents, changed_cooking_utensil, score
+import { 
+	direction, spots, storage_type, item_key,
+	stove_recipes, fryer_recipes, one_ingredient_recipes, 
+	liquid_fridge_contents, solid_fridge_contents, veggie_fridge_contents, dry_storage_contents, 
+	fryer_recipes_order, stove_recipes_order, setUpKeyNames, key_name,
 } from "./idkeys.js";
-import { getMapTile, setMapTile, removeMapTile, map_item, 
+import { 
+	getMapTile, setMapTile, removeMapTile, map_item, 
 	map_furniture, map_counter_item, map_floor_item, clearMap
 } from "./map.js";
-import { belts } from "./belt.js";
-import { countProperties } from "./helper.js";
 
-export let items = [];
+export var items = {};
 
-let currently_updating_belt = false;
-
-export const item_tiles = [];
-const storage = [];
-const cookery = [];
+export const item_tiles = {};
+const storages = {};
 
 export function setUpItems() {
+	setUpKeyNames();
     addItemTileIds();
 
-	addItem(cooking_utensil.pot, belts[0]);
-	addItem(cooking_utensil.pot, belts[3]);
-	addItem(cooking_utensil.fry_tray, belts[8]);
-	addItem(book.fryer_book, belts[5]);
-	addItem(book.stove_book, belts[10]);
-	addItem(cooking_utensil.infinite_plates, belts[12]);
+	spawnBeltItems();
+	spawnSpotItems();
 }
 
+export function spawnBeltItems() {
+}
 
-function setItemToMap(on_counter, spr, x, y) {
+function spawnSpotItems() {
+	addItem(item_key["pot"], item_tiles[getItemKey(7,9)], -1, true);
+	addItem(item_key["fry_tray"], item_tiles[getItemKey(8,9)], -1, true);
+	addItem(item_key["pot"], item_tiles[getItemKey(9, 9)], -1, true);
+	addItem(item_key["fryer_book"], item_tiles[getItemKey(6,9)], -1, true);
+	addItem(item_key["stove_book"], item_tiles[getItemKey(5, 9)], -1, true);
+	addItem(item_key["infinite_plates"], item_tiles[getItemKey(6, 6)], -1, true);
+}
+
+export function setItemToMap(on_counter, spr, x, y) {
 	on_counter ? setMapTile(map_counter_item, spr, x, y) : setMapTile(map_floor_item, spr, x, y);
 }
 
-
-function takeItemFromMap(on_counter, x, y) {
+export function removeItemFromMap(on_counter, x, y) {
 	on_counter ? removeMapTile(map_counter_item, x, y) : removeMapTile(map_floor_item, x, y);
 }
 
@@ -43,110 +47,114 @@ function clearItemMaps() {
 	clearMap(map_floor_item);
 }
 
-export function addItemWithScore(item_spr, spot, score) {
-	let bottom_tile = checkBottomTile(spot);
-	
-	let item = {
+function Item(item_spr, pickable) {
+	return {
+		"name": key_name[item_spr],
 		"spr": item_spr,
-		"current_tile": bottom_tile[0],
-		"tile_type": bottom_tile[1],
-		"on_counter": bottom_tile[2],
-		"x": spot.x,
-		"y": spot.y,
-		"score": score,
+		"current_tile": -1,
+		"tile_type": -1,
+		"on_counter": false,
+		"x": -8,
+		"y": -8,
+		"type": "",
+		"subtype": "",
+		"pickable": pickable,
 	};
-
-	spot.full = true;
-
-	items.push(item);
-	setItemToMap(item.on_counter, item.spr, item.x, item.y);
-
-	return items.length - 1;
 }
 
+export function addItem(item_spr, spot, score, pickable) {
+	if (spot == undefined) {
+		return;
+	}
 
-export function addItem(item_spr, spot) {
-	let bottom_tile = checkBottomTile(spot);
-	
-	let item = {
-		"spr": item_spr,
-		"current_tile": bottom_tile[0],
-		"tile_type": bottom_tile[1],
-		"on_counter": bottom_tile[2],
-	};
+	let item = Item(item_spr, pickable);
 
-	if (spot == -1) { // hand
-		item.x = -8; // no flickering when placed into hand
-		item.y = -8; // temp out of screen
-		item.on_counter = false;
-	} else { // floor / counter
+	if (spot !== -1) {
+		item.current_tile = getItemKey(spot.x, spot.y);
+		item.tile_type = spot.tile_type;
+		item.on_counter = spot.is_counter;
 		item.x = spot.x;
 		item.y = spot.y;
 		spot.full = true;
 	}
-	
-	if (item_spr == cooking_utensil.pot 
-		|| item_spr == cooking_utensil.fry_tray) {
+
+	if (item_spr == item_key["money"]) {
+		if (score !== -1 && typeof score == "number") {
+			item.type = "money";
+			item.score = score;
+		}
+	}
+	else if (item_spr == item_key["pot"]
+		|| item_spr == item_key["fry_tray"]) {
 		item.contents = [];
 		item.cooked = false;
 		item.full = false;
 		item.burned = false;
 		item.chef = -1;
+		item.type = "cookery";
 
-		cookery.push(item);
+		if (item_spr == item_key["pot"]) {
+			item.subtype = "pot";
+		}
+		else if (item_spr == item_key["fry_tray"]) {
+			item.subtype = "fry_tray";
+		}
 	}
-	else if (item_spr == cooking_utensil.bowl) {
+	else if (item_spr == item_key["bowl"]) {
 		item.contents = [];
 		item.full = false;
+		item.type = "cookery";
+		item.subtype = "container";
 	}
-	else if (item_spr == book.drink_book 
-		|| item_spr == book.fryer_book 
-		|| item_spr == book.stove_book) {
+	else if (item_spr == item_key["stove_book"]
+		|| item_spr == item_key["fryer_book"]) {
 
-		item.book_type = -1;
 		item.current_selection = 0;
 		item.max_choice = 0;
+		item.type = "book";
 
-		if (item_spr == book.fryer_book) {
-			item.book_type = book.fryer_book;
-			item.max_choice = countProperties(fryer_recipes);
+		if (item_spr == item_key["fryer_book"]) {
+			item.pages = fryer_recipes_order;
+			item.recipes = fryer_recipes;
+			item.max_choice = fryer_recipes_order.length;
+			item.subtype = "fryer";
 		}
-		else if (item_spr == book.stove_book) {
-			item.book_type = book.stove_book;
-			item.max_choice = countProperties(stove_recipes);
+		else if (item_spr == item_key["stove_book"]) {
+			item.pages = stove_recipes_order;
+			item.recipes = stove_recipes;
+			item.max_choice = stove_recipes_order.length;
+			item.subtype = "stove";
 		}
 	}
-	else if (item_spr == cooking_utensil.infinite_plates){ 
+	else if (item_spr == item_key["infinite_plates"]){ 
 
 	}
-	else if (item_spr == score.money) {
-		item.score = 5;
+	else if (item_spr == item_key["plate"]) {
+		item.type = "serve"; // ?
+		item.subtype = "plate";
 	}
 	else {
-		item.cooked = false; // for ingredients and stuff
+		if (typeof score == "object") {
+			item.chef = score.chef;
+		}
+		else {
+			item.chef = -1;
+		}
+
+		item.type = "ingredient";
 	}
 
-	items.push(item);
-	setItemToMap(item.on_counter, item.spr, item.x, item.y);
-
-	return items.length - 1; // testing
-}
-
-
-function checkBottomTile(spot) {
-	if (typeof spot.id == "number") {
-		return [spot.id, spot.tile_type, spot.is_counter]; 
+	if (spot == -1) { // give item directly
+		return item;
 	}
 	
-	return [-1, -1]; // problem here
+	items[getItemKey(item.x, item.y)] = item;
+	setItemToMap(item.on_counter, item.spr, item.x, item.y);
 }
 
 function addItemTileIds() {
 	let map_width = 16;
 	let map_height = 16;
-
-    let id_counter = 0;
-	let storage_counter = 0;
     
     for (let i = 0; i < map_width; i++) {
         for (let j  = 0; j < map_height; j++) {
@@ -159,48 +167,50 @@ function addItemTileIds() {
 					"x": tile.x,
 					"y": tile.y,
 					"full": false,
+					"type": "",
+					"subtype": "",
 				};
 
 				if (tile.sprite == spots.item_spot 
 					|| tile.sprite == spots.stove 
 					|| tile.sprite == spots.fryer) {
 
-					tile_spot.id = id_counter;
-					tile.id = id_counter;
 					tile_spot.is_counter = false;
+					tile_spot.type = "place";
 
 					if (counter_check.sprite == spots.counter 
-						|| counter_check.sprite == spots.side_counter) {
+						|| counter_check.sprite == spots.side_counter
+						|| counter_check.sprite == spots.belt_outer_table
+						|| counter_check.sprite == spots.belt_table) {
 						tile_spot.is_counter = true;
 					}
 
 					if ( tile.sprite == spots.stove 
-						|| tile.sprite == spots.fryer
-						|| tile.sprite == spots.belt_outer_table
-						|| tile.sprite == spots.belt_table) {
+						|| tile.sprite == spots.fryer) {
 						tile_spot.is_counter = true;
+						tile_spot.subtype = "utility";
 					}
-
-                	id_counter++;
-                	item_tiles.push(tile_spot);
+					
+                	item_tiles[getItemKey(tile_spot.x, tile_spot.y)] = tile_spot;
+					items[getItemKey(tile_spot.x, tile_spot.y)] = -1;
 				}
 				else if (tile.sprite == spots.storage) {
 					let storage_tile = getMapTile(map_furniture, j, i); 
 
-					if (storage_tile.sprite == storage_color.white) {
-						tile_spot.storage_type = storage_type.liquid;
+					if (storage_tile.sprite == storage_type.liquid) {
+						tile_spot.contents = liquid_fridge_contents;
 						tile_spot.max_choice = liquid_fridge_contents.length;
 					}
-					else if (storage_tile.sprite == storage_color.green) {
-						tile_spot.storage_type = storage_type.veggie;
+					else if (storage_tile.sprite == storage_type.veggie) {
+						tile_spot.contents = veggie_fridge_contents;
 						tile_spot.max_choice = veggie_fridge_contents.length;
 					}
-					else if (storage_tile.sprite == storage_color.red) {
-						tile_spot.storage_type = storage_type.solid;
+					else if (storage_tile.sprite == storage_type.solid) {
+						tile_spot.contents = solid_fridge_contents;
 						tile_spot.max_choice = solid_fridge_contents.length;
 					}
-					else if (storage_tile.sprite == storage_color.colorful) {
-						tile_spot.storage_type = storage_type.dry;
+					else if (storage_tile.sprite == storage_type.dry) {
+						tile_spot.contents = dry_storage_contents;
 						tile_spot.max_choice = dry_storage_contents.length;
 					}
 
@@ -208,591 +218,418 @@ function addItemTileIds() {
 					tile_spot.open = false;
 					tile_spot.current_selection = 0;
 
-					tile_spot.id = storage_counter;
-					tile.id = storage_counter;
+					storages[getItemKey(tile_spot.x, tile_spot.y)] = tile_spot;
+				}
+				else if (tile.sprite == spots.belt) {
+					tile_spot.type = "place";
+            		tile_spot.subtype = "";
+					tile_spot.is_counter = true;
 
-					storage_counter++;
-					storage.push(tile_spot);
+					item_tiles[getItemKey(tile_spot.x, tile_spot.y)] = tile_spot;
+					items[getItemKey(tile_spot.x, tile_spot.y)] = -1;
 				}
 			}
         }
     }
 }
 
-function checkCanPlace(spot_type, item_type) {
-	if (spot_type == spots.stove && (item_type == cooking_utensil.pot 
-		|| item_type == changed_cooking_utensil.pot_burned
-		|| item_type == changed_cooking_utensil.pot_full
-		|| item_type == changed_cooking_utensil.pot_cooked)) {
+export function checkCanPlace(spot, item_subtype) {
+	if (spot == undefined || spot.full) {
+		return false;
+	}
+
+	const tile_type = spot.tile_type;
+	const tile_subtype = spot.subtype;
+	
+	if (tile_type == spots.stove 
+		&& item_subtype == "pot") {
 		return true;
 	}
 
-	if (spot_type == spots.fryer && (item_type == cooking_utensil.fry_tray 
-		|| item_type == changed_cooking_utensil.fry_tray_cooked
-		|| item_type == changed_cooking_utensil.fry_tray_full
-		|| item_type == changed_cooking_utensil.fry_tray_burned)) {
+	if (tile_type == spots.fryer 
+		&& item_subtype == "fry_tray") {
 		return true;
 	}
 
-	if (spot_type !== spots.sink && (spot_type == spots.item_spot || spot_type == spots.belt)) {
+	if (spot.type == "place" 
+		&& tile_subtype != "utility") {
 		return true;
 	}
 
 	return false;
 }
 
+export function checkCanPickUp(spot) {
+	if (spot == undefined || spot == -1) { return false; }
 
-function placeItem(held_item, spot) {
-	held_item.x = spot.x;
-	held_item.y = spot.y;
-	held_item.current_tile = spot.id;
-	held_item.tile_type = spot.tile_type;
-
-	spot.full = true;
-
-	if (spot.is_counter) { // maybe issue
-		held_item.on_counter = true;
-	}
-
-	setItemToMap(spot.is_counter, held_item.spr, held_item.x, held_item.y);
-
-	held_item = -1;
-
-	return [held_item, spot];
+	return spot.full;
 }
 
-function plateFood(held_item, check_item) {
-	if (check_item.cooked) {
-		held_item.spr = check_item.contents;
 
-		check_item.cooked = false;
-		check_item.contents = [];
-		
-		if (check_item.spr == changed_cooking_utensil.pot_burned
-			|| check_item.spr == changed_cooking_utensil.pot_cooked) {
-			check_item.spr = cooking_utensil.pot;
+function plateFood(p_id, held_item, check_item) {
+	if (check_item.subtype == "pot" || check_item.subtype == "fry_tray") {
+		if (check_item.cooked) {
+			held_item.spr = check_item.contents; // number
+			held_item.subtype = "food";
+			held_item.chef = check_item.chef;
+
+			check_item.full = false;
+			check_item.cooked = false;
+			check_item.burned = false;
+			check_item.chef = -1;
+			check_item.contents = [];
+			check_item.spr = item_key[check_item.subtype];
+
+			setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
 		}
-		else if (check_item.spr == changed_cooking_utensil.fry_tray_cooked
-			|| check_item.spr == changed_cooking_utensil.fry_tray_burned) {
-			check_item.spr = cooking_utensil.fry_tray;
+	}
+	else if (check_item.subtype == "plate") {
+		if (held_item.type == "cookery" && (held_item.cooked || held_item.burned)) {
+			check_item.spr = held_item.contents; // number
+			check_item.subtype = "food";
+			check_item.chef = held_item.chef;
+
+			setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
+
+			return {"held_item": trashCanSpot(true, held_item), "check_item": check_item};
 		}
 		
-		check_item.full = false;
-		check_item.burned = false;
+		if (held_item.type == "ingredient"){
+			for (const [key, ingredient] of Object.entries(one_ingredient_recipes)) {
+				if (ingredient == held_item.spr) {
+					check_item.spr = item_key[key];
+					check_item.subtype = "food";
+					check_item.chef = p_id;
+					setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
+					return {"held_item": -1, "check_item": check_item};
+				}
+			}
+		}
+	}
+	else if (check_item.type == "ingredient") {
+		for (const [key, ingredient] of Object.entries(one_ingredient_recipes)) {
+			if (ingredient == check_item.spr) {
+				held_item.spr = item_key[key];
+				held_item.subtype = "food";
+				held_item.chef = p_id;
 
-		setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
+				removeItem(check_item.x, check_item.y);
 
-		return [held_item, check_item];
+				return {"held_item": held_item, "check_item": -1};
+			}
+		}
+	}
+
+	return {"held_item": held_item, "check_item": check_item};
+}
+
+function putIngredientIn(held_item, check_item) {
+	if (check_item == -1 || (check_item.cooked || check_item.burned)) {
+		return {"held_item": held_item, "check_item": check_item};
+	}
+
+	if (!check_item.full) {
+		check_item.spr = item_key[check_item.subtype + "_full"];
+	}
+
+	setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
+
+	check_item.contents.push(held_item);
+	check_item.full = true;
+
+	return {"held_item": -1, "check_item": check_item};
+}
+
+
+function pickUpItem(spot) {
+	let front_item = getItem(spot.x, spot.y);
+
+	if (front_item == undefined || front_item == -1 || !front_item.pickable) {
+		return -1;
+	}
+
+	if (front_item.spr == item_key["infinite_plates"]) {
+		return addItem(item_key["plate"], -1, -1, true);
+	}
+
+	removeItem(front_item.x, front_item.y);
+
+	front_item.current_tile = -1;
+	front_item.tile_type = -1;
+	front_item.on_counter = false;
+	front_item.x = -8;
+	front_item.y = -8;
+
+	return front_item;
+}
+
+
+function trashCanSpot(holding_item, held_item) {
+	if (!holding_item || held_item.type == "book") {
+		return held_item;
+	}
+
+	if (held_item.type == "cookery") {
+		held_item.spr = item_key[held_item.subtype];
+		held_item.contents = [];
+		held_item.full = false;
+		held_item.cooked = false;
+		held_item.burned = false;
+		held_item.chef = -1;
+
+		return held_item;
+	}
+
+	if (held_item.subtype == "food") {
+		held_item.spr = item_key["plate"];
+		held_item.type = "serve";
+		held_item.subtype = "plate";
+
+		return held_item;
 	}
 	
+	return -1;
+}
 
-	for (const [key, dish] of Object.entries(one_ingredient_recipes)) { // problme
-		if (dish[0] == held_item.spr) {
-			check_item.spr = cooked_food[key];
-			setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
-			throwAwayItem(locateHeldItemIndex());
-			held_item = -1;
-			return [held_item, check_item];
-		}
+export function placeItem(item, spot) {
+	if (item == undefined || item == -1) {
+		return;
 	}
 
-	return [held_item, check_item];
+	item.x = spot.x;
+	item.y = spot.y;
+	item.current_tile = getItemKey(spot.x, spot.y);
+	item.tile_type = spot.tile_type;
+	item.on_counter = spot.is_counter;
+
+	items[getItemKey(spot.x, spot.y)] = item;
+	item_tiles[getItemKey(spot.x, spot.y)].full = true;
+
+	setItemToMap(item.on_counter, item.spr, item.x, item.y);
 }
 
 function pourIngredientsIn(held_item, check_item) {
-	if (check_item == -1) { // should be it keep it here anyways when items are updated fast
-		return [held_item, check_item];
-	}
-
 	for (let i = 0; i < held_item.contents.length; i++) {
 		check_item.contents.push(held_item.contents[i]);
 	}
 
-	held_item.contents = [];
-	held_item.full = false;
-
-	if (check_item.contents.length !== 0) {
-		check_item.full = true;
-	}
-
-	return [held_item, check_item];
-}
-
-function putIngredientIn(held_item, check_item) {
-	if (check_item == -1) { // should be it keep it here anyways when items are updated fast
-		return [held_item, check_item];
-	}
-
-	check_item.contents.push(held_item);
-	throwAwayItem(locateHeldItemIndex()); // simplify this
-	held_item = -1;
-
-
-	if (check_item.spr == cooking_utensil.pot) {
-		check_item.spr = changed_cooking_utensil.pot_full;
-	}
-	else if (check_item.spr == cooking_utensil.fry_tray) {
-		check_item.spr = changed_cooking_utensil.fry_tray_full;
-	}
-
+	check_item.spr = item_key[check_item.subtype + "_full"];
+	
+	setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
 	check_item.full = true;
 
-	setItemToMap(check_item.on_counter, check_item.spr, check_item.x, check_item.y);
-
-	return [held_item, check_item];
+	return {"held_item": trashCanSpot(true, held_item), "check_item": check_item};
 }
 
 
-function pickUpItem(held_item, check_item, spot) {
-	if (check_item == -1) {
-		return [held_item, check_item, spot];
-	}
-
-	if (spot == -1) {
-		return [held_item, check_item, spot];
-	}
-
-	if (check_item.spr == cooking_utensil.infinite_plates) {
-		addItem(cooking_utensil.plate, -1);
-		return [items[items.length - 1], check_item, spot]; // may be issue problem
-	}
-
-	spot.full = false;
-	held_item = check_item;
-
-	check_item = -1; // new needed or not
-
-	held_item.tile_type = -1; // here too
-	held_item.current_tile = -1;
-	
-	held_item.on_counter = false;
-
-	takeItemFromMap(spot.is_counter, held_item.x, held_item.y);
-
-	return [held_item, check_item, spot];
-}
-
-
-export function throwAwayItem(index) { // figure this out
-	if ( index == -1 || typeof items[index] == "undefined") {
-		console.log("Can't throw away")
-		return;	
-	}
-
-	if (items[index].current_tile == -1 && items[index].tile_type == -1) {
-		items.splice(index, 1);
-	} else {
-		let tile = getMapTile(map_item, items[index].x, items[index].y);
-		tile.full = false;
-		takeItemFromMap(items[index].on_counter, items[index].x, items[index].y);
-		let test = items.splice(index, 1);
-		console.log("Thrown away: ",test)
-	}
-}
-
-function trashCanSpot(holding_item, held_item) {
-	if (!holding_item) {
-		return [holding_item, held_item];
-	}
-
-	if (held_item.spr == book.fryer_book
-		|| held_item.spr == book.stove_book) {
-
-	}
-
-	if (held_item.spr == cooking_utensil.pot 
-		|| held_item.spr == changed_cooking_utensil.pot_full
-		|| held_item.spr == changed_cooking_utensil.pot_cooked
-		|| held_item.spr == changed_cooking_utensil.pot_burned
-		|| held_item.spr == cooking_utensil.fry_tray
-		|| held_item.spr == changed_cooking_utensil.fry_tray_burned
-		|| held_item.spr == changed_cooking_utensil.fry_tray_full
-		|| held_item.spr == changed_cooking_utensil.fry_tray_cooked
-		|| held_item.spr == book.fryer_book
-		|| held_item.spr == book.stove_book) {
-
-		held_item.contents = [];
-		held_item.chef = -1;
-		held_item.full = false;
-		held_item.cooked = false;
-		held_item.burned = false;
-
-		if (held_item.spr == changed_cooking_utensil.pot_burned
-			|| held_item.spr == changed_cooking_utensil.pot_cooked
-			|| held_item.spr == changed_cooking_utensil.pot_full) {
-			held_item.spr = cooking_utensil.pot;
-		}
-		else if (held_item.spr == changed_cooking_utensil.fry_tray_cooked
-			|| held_item.spr == changed_cooking_utensil.fry_tray_burned
-			|| held_item.spr == changed_cooking_utensil.fry_tray_full) {
-			held_item.spr = cooking_utensil.fry_tray;
-		}
-
-		return [holding_item, held_item];
-	}
-
-	// if (held_item.spr == cooking_utensil.plate) {
-	// 	return [holding_item, held_item];
-	// }
-
-	if (held_item.spr == cooking_utensil.bowl) {
-		held_item.contents = [];
-		held_item.full = false;
-
-		return [holding_item, held_item];
-	}
-
-	for (const [key, dish] of Object.entries(cooked_food)) {
-		if (held_item.spr == dish) {
-			held_item.spr = cooking_utensil.plate;
-
-			return [holding_item, held_item];
-		}
-	}
-
-	throwAwayItem(locateHeldItemIndex());
-
-	held_item = -1;
-	holding_item = false;
-
-	return [holding_item, held_item];
-}
-
-
-function interactSpot(tile_spots, tile_id, holding_item, held_item) {
-	let spot = tile_spots[tile_id];
+function interactSpot(p_id, tile_key, holding_item, held_item) {
+	let spot = item_tiles[tile_key];
 
 	if (holding_item) {
-		if (!spot.full) {
-			if (checkCanPlace(spot.tile_type, held_item.spr)) {
-				let result = placeItem(held_item, spot);
-				held_item = result[0];
-				spot = result[1];
-
-				holding_item = false;
-				return [holding_item, held_item];
-			}
+		if (checkCanPlace(spot, held_item.subtype)) {
+			placeItem(held_item, spot);
+			return -1;
 		}
 
 		if (spot.full) {
-			let check_item = collectItem(spot.id, spot.tile_type);
+			let result = -1;
+			let check_item = getItem(spot.x, spot.y);
 
-			if (check_item == -1) { // should be it keep it here anyways when items are updated fast
-				return [holding_item, held_item];
-			} // choose where to put this
-
-			if (check_item.spr == cooking_utensil.pot 
-				|| check_item.spr == changed_cooking_utensil.pot_burned
-				|| check_item.spr == changed_cooking_utensil.pot_full
-				|| check_item.spr == changed_cooking_utensil.pot_cooked
-				|| check_item.spr == cooking_utensil.fry_tray
-				|| check_item.spr == changed_cooking_utensil.fry_tray_cooked
-				|| check_item.spr == changed_cooking_utensil.fry_tray_full
-				|| check_item.spr == changed_cooking_utensil.fry_tray_burned) {
-
-				// if (held_item.spr == cooking_utensil.bowl) {
-				// 	let result = pourIngredientsIn(held_item, check_item);
-				// 	held_item = result[0];
-				// 	check_item = result[1];
-				// 	return [holding_item, held_item];
-				// }
-
-				if (held_item.spr == cooking_utensil.pot 
-					|| held_item.spr == changed_cooking_utensil.pot_burned
-					|| held_item.spr == changed_cooking_utensil.pot_full
-					|| held_item.spr == changed_cooking_utensil.pot_cooked
-					|| held_item.spr == cooking_utensil.fry_tray
-					|| held_item.spr == changed_cooking_utensil.fry_tray_cooked
-					|| held_item.spr == changed_cooking_utensil.fry_tray_full
-					|| held_item.spr == changed_cooking_utensil.fry_tray_burned
-					|| held_item.spr == book.fryer_book
-					|| held_item.spr == book.stove_book) {
-					return [holding_item, held_item];
+			if (check_item.type == "cookery") {
+				if (held_item.type == "book"
+					|| held_item.subtype == "food") {
+					return held_item;
 				}
 
-				if (held_item.spr == cooking_utensil.plate) {
-					let result = plateFood(held_item, check_item);
-					held_item = result[0];
-					check_item = result[1];
-					return [holding_item, held_item];
+				if (held_item.type == "cookery" && !held_item.cooked && !held_item.burned 
+					&& !check_item.cooked && !check_item.burned && held_item.contents.length > 0) {
+					result = pourIngredientsIn(held_item, check_item);
 				}
-
-				for (const [key, dish] of Object.entries(cooked_food)) {
-					if (dish == held_item.spr) {
-						return [holding_item, held_item];
-					}
+				else if (held_item.subtype == "plate") {
+					result = plateFood(p_id, held_item, check_item);
 				}
-
-				let result = putIngredientIn(held_item, check_item);
-				held_item = result[0];
-				check_item = result[1];
-				holding_item = false;
-				return [holding_item, held_item];
+				else if (held_item.type !== "cookery") {
+					result = putIngredientIn(held_item, check_item);
+				}
+			}
+			else if (check_item.subtype == "plate") {
+				result = plateFood(p_id, held_item, check_item);
+			}
+			else if (check_item.type == "ingredient") {
+				if (held_item.subtype == "plate") {
+					result = plateFood(p_id, held_item, check_item);
+				}
 			}
 
-			if (check_item.spr == cooking_utensil.plate) {
-				let result = plateFood(held_item, check_item);
-				held_item = result[0];
-				check_item = result[1];
-
-				if (held_item == -1) { 
-					holding_item = false;
-				}
-
-				return [holding_item, held_item];
+			if (result !== -1) {
+				held_item = result.held_item;
+				items[getItemKey(spot.x, spot.y)] = result.check_item;
 			}
 
-			if (check_item.spr == cooking_utensil.bowl) {
-				for (const [key, dish] of Object.entries(cooked_food)) {
-					if (dish == held_item.spr) {
-						return [holding_item, held_item];
-					}
-				}
-
-				let result = putIngredientIn(held_item, check_item);
-				held_item = result[0];
-				check_item = result[1];
-				holding_item = false;
-				return [holding_item, held_item];
-			}
+			return held_item;
 		}
 	}
 
-	if (!holding_item) {
-		if (spot.full) {
+	if (!holding_item 
+		&& checkCanPickUp(spot)) {
 
-			let check_item = collectItem(spot.id, spot.tile_type);
-			
-			if (check_item == -1) { // when the spot was not set to full this was the issue check_item
-				return [holding_item, held_item];
-			}
+		held_item = pickUpItem(spot);
 
-			let result = pickUpItem(held_item, check_item, spot);
-			held_item = result[0];
-			check_item = result[1];
-			spot = result[2];
-			holding_item = true;
-			return [holding_item, held_item];
-		}
+		return held_item;
 	}
 
-	return [holding_item, held_item];
+	return held_item;
 }
 
 export function checkStorage(tile, holding_item) {
-	if (tile.sprite == spots.storage) {
-		if (!holding_item) {
-			for (let i = 0; i < storage.length; i++) {
-				if (storage[i].id == tile.id && !storage[i].open) {
-					storage[i].open = true;
-					return storage[i].id;
-				}
+	if (tile.sprite == spots.storage 
+		&& !holding_item) {
+			if (!storages[getItemKey(tile.x, tile.y)].open) {
+				storages[getItemKey(tile.x, tile.y)].open = true;
+				return getItemKey(tile.x, tile.y);
 			}
-		}
 	}
+
 	return -1;
 }
 
-export function confirmFront(tile, held_item, holding_item) {	
-	if (tile.sprite == spots.trashcan) {
+export function interactFront(p_id, tile, holding_item, held_item) {
+	if (tile.sprite == spots.stove 
+		|| tile.sprite == spots.fryer 
+		|| tile.sprite == spots.item_spot
+		|| tile.sprite == spots.belt) {
+		return interactSpot(p_id, getItemKey(tile.x, tile.y), holding_item, held_item);
+	}
+	else if (tile.sprite == spots.trashcan) {
 		return trashCanSpot(holding_item, held_item);
 	}
-	else if (tile.sprite == spots.stove 
-		|| tile.sprite == spots.fryer 
-		|| tile.sprite == spots.item_spot) {
-		return interactSpot(item_tiles, tile.id, holding_item, held_item);
-	}
-	else if (tile.sprite == spots.belt) {
-		if (currently_updating_belt) { // should work here
-			return [holding_item, held_item];
-		}
-		return interactSpot(belts, tile.id, holding_item, held_item);
-	}
-	else if (tile.sprite == spots.sink) { // could clean off food in the sink
-		if (holding_item) {
-			if (held_item.spr == changed_cooking_utensil.plate_dirty) {
-				held_item.spr = cooking_utensil.plate;
-				return [holding_item, held_item];
-			}
 
-			return [holding_item, held_item];
-		}
-	}
-
-    return [holding_item, held_item];
+    return held_item;
 }
 
-export function grabStorageItem(storage_id) {
-	let current_storage = storage[storage_id];
-	let current_type = (current_storage.storage_type == storage_type.liquid ? liquid_fridge_contents 
-		: (current_storage.storage_type == storage_type.solid ? solid_fridge_contents 
-		: (current_storage.storage_type == storage_type.veggie ? veggie_fridge_contents :
-		dry_storage_contents
-	)));
+export function grabStorageItem(storage_id, pid) {
+	const storage = storages[storage_id];
+	storage.open = false;
 
-	let current_select = current_storage.current_selection;
-
-	let spr = -1;
-	spr = current_type[current_select];
-
-	addItem(spr, -1);
-
-	current_storage.open = false;
-
-	return [true, items[items.length - 1], false];
+	return addItem(storage.contents[storage.current_selection], -1, {"chef": pid}, true);
 }
 
 export function leaveStorage(storage_id) {
-	let current_storage = storage[storage_id];
-	current_storage.open = false;
+	storages[storage_id].open = false;
 }
-
 
 export function moveStorageSelection(storage_id, move) {
-	if (storage[storage_id].open) {
-		let selection = storage[storage_id].current_selection;
+	const storage = storages[storage_id];
+
+	if (storage.open) {
 		const min_choice = 0;
-		let max_choice = storage[storage_id].max_choice;
+		const max_choice = storage.max_choice - 1;
+		let selection = storage.current_selection;
 
-		if (move == direction.right) {
-			selection++;
-			if (selection >= max_choice) {
-				selection = max_choice - 1;
-			}
-		}
-		else if (move == direction.left) {
-			selection--;
-			if (selection < min_choice) {
-				selection = min_choice;
-			}
-		}
+		if (move == direction.right) { selection++; }
+		else if (move == direction.left) { selection--; }
 
-		storage[storage_id].current_selection = selection;
+		if (selection > max_choice) { selection = min_choice; }
+		if (selection < min_choice) { selection = max_choice; }
+
+		storage.current_selection = selection;
 	}
 }
 
-export function getItemOnTile(x, y) {
-	for (let i = 0; i < items.length; i++) {
-		if (x == items[i].x && y == items[i].y) {
-			return i;
-		}
-	}
-	
-	return -1;
+export function moveBookSelection(move, selection, max_choice) {
+	const min_choice = 0;
+
+	if (move == direction.right) { selection++; }
+	else if (move == direction.left) { selection--; }
+
+	if (selection >= max_choice) { selection = max_choice - 1; }
+	if (selection < min_choice) { selection = min_choice; }
+    
+	return selection;
 }
 
-function collectItem(spot_id, spot_type) {
-	let collected_item = -1;
-	for (let i = 0; i < items.length; i++) {
-		if (items[i].current_tile == spot_id && items[i].tile_type == spot_type) {
-			collected_item = items[i];
-			break;
-		}
+export function getItemKey(x, y) {
+	return ("" + x + "," + y); // key
+}
+
+export function getItem(x, y) {
+	return items[getItemKey(x, y)];
+}
+
+export function removeItem(x, y) {
+	let key = getItemKey(x, y);
+	let tile = item_tiles[key];
+
+	if (tile == undefined || tile == -1) {
+		return;
 	}
-	return collected_item;
+
+	removeItemFromMap(tile.is_counter, tile.x, tile.y);
+	items[getItemKey(x, y)] = -1;
+	item_tiles[getItemKey(x, y)].full = false;
 }
 
 
-export function locateHeldItemIndex() { // for hand atm // get the index of the item first?
-	for (let i = 0; i < items.length; i++) {
-		if (items[i].current_tile == -1 && items[i].tile_type == -1) {
-			return i;
-		}
-	}
-	return -1;
-}
+// Player interaction cooking
 
-
-
-
-// player interaction
-export function cookTheItems(p_id, tile_id) {
-	let tile = item_tiles[tile_id];
+export function cookTheItems(p_id, tile_key) {
+	let tile = item_tiles[tile_key];
 
 	if ((tile.tile_type == spots.fryer || tile.tile_type == spots.stove) && tile.full) {
-		for (let i = 0; i < cookery.length; i++) {
-			if (cookery[i].x == tile.x && cookery[i].y == tile.y) {
-				if (!cookery[i].cooked) {
-					cookery[i] = cookItems(p_id, cookery[i]);
-					setItemToMap(cookery[i].on_counter, cookery[i].spr, cookery[i].x, cookery[i].y);
-					break;
-				}
-			}
+		let cookery = items[getItemKey(tile.x, tile.y)];
+		
+		if (!cookery.cooked) {
+			cookery = cookItems(p_id, cookery); // hmm confirm please
+			setItemToMap(cookery.on_counter, cookery.spr, cookery.x, cookery.y);
 		}
 	}
 }
 
-
-function burnItems(p_id, container) {
-	container.contents = cooked_food.not_food;
-	container.cooked = true;
-	container.burned = true;
-
-	if (container.spr == changed_cooking_utensil.pot_full) {
-		container.spr = changed_cooking_utensil.pot_burned;
+function addFoodToContainer(p_id, recipe, container) {
+	if (recipe == -1) {
+		container.contents = item_key["not_food"];
+		container.burned = true;
+		container.spr = item_key[container.subtype + "_burned"];
 	}
-	else if (container.spr == changed_cooking_utensil.fry_tray_full) {
-		container.spr = changed_cooking_utensil.fry_tray_burned;
+	else {
+		container.contents = item_key[recipe];
+		container.spr = item_key[container.subtype + "_cooked"];
 	}
-
+	
 	container.chef = p_id;
+	container.cooked = true;
 
 	return container;
 }
 
-
 function cookItems(p_id, container) {
-	if (container.contents.length == 0) {
-		return container;
-	}
+	if (!container.full || container.cooked) { return container; }
 
 	let recipe = -1;
 
-	if (container.spr == changed_cooking_utensil.pot_full) {
+	if (container.subtype == "pot") {
 		recipe = checkRecipe(container.contents, stove_recipes);
 	}
-	else if (container.spr == changed_cooking_utensil.fry_tray_full) {
+	else if (container.subtype == "fry_tray") {
 		recipe = checkRecipe(container.contents, fryer_recipes);
 	}
 
-	if (recipe !== -1) {
-		// container.contents = { p_id: cooked_food[recipe] };
-		container.contents = cooked_food[recipe];
-		container.chef = p_id;
-		container.cooked = true;
-
-		if (container.spr == changed_cooking_utensil.pot_full) {
-			container.spr = changed_cooking_utensil.pot_cooked;
-		}
-		else if (container.spr == changed_cooking_utensil.fry_tray_full) {
-			container.spr = changed_cooking_utensil.fry_tray_cooked;
-		}
-
-		return container;
-	}
-
-	container = burnItems(p_id, container);
-
-	return container;
+	return addFoodToContainer(p_id, recipe, container);
 }
 
-
-function checkRecipe(contents, recipe_type) {
-	let item_recipes = recipe_type;
-
+function checkRecipe(contents, item_recipes) {
 	for (const [key, recipe] of Object.entries(item_recipes)) {
 		if (contents.length == recipe.length) {
 			for (let j = 0; j < contents.length; j++) {
 				let c1 = contents.filter((ingredient) => ingredient.spr == contents[j].spr);
 				let c2 = recipe.filter((ingredient) => ingredient == contents[j].spr);
 
-				if ((c1.length == 0 || c2.length == 0) || (c1.length != c2.length)) {
-					break;
+				if ((c1.length == 0 || c2.length == 0) 
+					|| (c1.length != c2.length)) { 
+					break; 
 				}
 
-				if (j == recipe.length - 1) {
-					return key;
-				}
+				if (j == recipe.length - 1) { return key; }
 			}
 		}
 	}
@@ -801,138 +638,98 @@ function checkRecipe(contents, recipe_type) {
 }
 
 
+// DRAW START
+
+
 function drawStorageMenu() {
-	for (let i = 0; i < storage.length; i++) {
-		if (storage[i].open) {
-			let current_storage = (storage[i].storage_type == storage_type.liquid ? liquid_fridge_contents 
-				: (storage[i].storage_type == storage_type.solid ? solid_fridge_contents 
-					: (storage[i].storage_type == storage_type.veggie ? veggie_fridge_contents :
-						dry_storage_contents // can increase when neccessary
-			)));
+	for (const [key, storage] of Object.entries(storages)) {
+		if (storage.open) {
+			const bg = 48;
+			const arrow = 131;
+			const offset_2 = -8;
 
-			let current_select = storage[i].current_selection;
-			let min_choice = 0;
-			let max_choice = storage[i].max_choice;
+			const currently_selected = storage.current_selection;
 
-			if (current_select !== min_choice) { // left arrow
-				sprite (131, storage[i].x * 8 - 8, storage[i].y * 8 - 8, true);
-			}
+			sprite(arrow, storage.x * 8 - 8, storage.y * 8 + offset_2, true);
+			sprite(arrow, storage.x * 8 + 8, storage.y * 8 + offset_2);
 
-			sprite(48, storage[i].x * 8, storage[i].y * 8 - 8); // background
-			sprite(current_storage[current_select], storage[i].x * 8, storage[i].y * 8 - 8); // food
-
-			if (current_select !== max_choice - 1) {
-				sprite (131, storage[i].x * 8 + 8, storage[i].y * 8 - 8); // right arrow
-			}
+			sprite(bg, storage.x * 8, storage.y * 8 - 8);
+			sprite(storage.contents[currently_selected], storage.x * 8, storage.y * 8 + offset_2);
 		}
 	}
 }
 
-export function drawRecipe(held_item) {
-    let book_recipes = (held_item.book_type == book.fryer_book ? fryer_recipes : stove_recipes);
+export function drawRecipe(book) {
+    const recipe_pages = book.pages;
+	const recipes = book.recipes;
+	const min_choice = 0;
+    const max_choice = recipe_pages.length - 1;
 
-    let current_select = held_item.current_selection;
-    let min_choice = 0;
-    let max_choice = held_item.max_choice;
+    const currently_selected = book.current_selection;
+    const recipe = recipe_pages[currently_selected];
+	const recipe_contents = recipes[recipe];
+    const recipe_image = item_key[recipe];
 
-    let counter = 0;
-    let current_recipe = -1;
+    const image_offset_y = -16;
+	const bg = 48;
+	const arrow = 131;
 
-    for (const [key, recipe] of Object.entries(book_recipes)) { // could be done better
-        if (counter == current_select) {
-            current_recipe = key;
-            break;
-        }
+	// Recipe with arrows
 
-        counter++;
+    if (currently_selected !== min_choice) { // left
+        sprite(arrow, book.x - 8, book.y + image_offset_y, true);
+    }
+	if (currently_selected !== max_choice) { // right
+        sprite(arrow, book.x + 8, book.y + image_offset_y);
     }
 
-    let recipe_image = cooked_food[current_recipe];
-    let recipe_contents = book_recipes[current_recipe];
-    let recipe_length = recipe_contents.length;
+    sprite(bg, book.x, book.y + image_offset_y);
+    sprite(recipe_image, book.x, book.y + image_offset_y);
 
-    let left_side = Math.floor(recipe_length / 2);
-    let offset_x = 0;
-    let offset_y = -8;
-    let image_offset_y = -16;
-
-    if (current_select !== min_choice) { // left arrow
-        sprite (131, held_item.x - 8, held_item.y + image_offset_y, true);
-    }
-
-    sprite(48, held_item.x, held_item.y + image_offset_y);
-    sprite(recipe_image, held_item.x, held_item.y + image_offset_y);  // product image
-
-    if (current_select !== max_choice - 1) {
-        sprite (131, held_item.x + 8, held_item.y + image_offset_y); // right arrow
-    }
-
-    if (recipe_length % 2 == 0) {
-        offset_x = 9;
-        let extra_offset = 0;
-
-        let starting_offset = (held_item.x - 4) - (offset_x * (left_side - 1));
-
-        for (let i = 0; i < recipe_length; i++) {
-            sprite(48, starting_offset + extra_offset, held_item.y + offset_y);
-            sprite(recipe_contents[i], starting_offset + extra_offset, held_item.y + offset_y);
-            starting_offset += offset_x;
-        }
-    }
-    else {
-        offset_x = 9;
-
-        let starting_offset = held_item.x - (offset_x * left_side);
-
-        for (let i = 0; i < recipe_length; i++) {
-            sprite(48, starting_offset, held_item.y + offset_y);
-            sprite(recipe_contents[i], starting_offset, held_item.y + offset_y);
-            starting_offset += offset_x;
-        }
-    }  
+    drawContents(recipe_contents, bg, book.x, book.y, "book");
 }
 
-export function drawItemsInContainer(held_item) {
-    if (typeof held_item.contents == "number"){
-        sprite(48, held_item.x, held_item.y + -8);
-        sprite(held_item.contents, held_item.x, held_item.y + -8);
+function drawContents(contents, bg, hx, hy, type) { // could just draw on a map and offset 
+    const offset_y = -8;
 
+	let offset_x = 9;
+	let left_side = Math.floor(contents.length / 2);
+
+	if (contents.length % 2 == 0) {
+		left_side -= 1;
+		hx -= 4;
+	}
+
+	let starting_offset = hx - (offset_x * left_side);
+
+	if (type == "book") {
+		for (let i = 0; i < contents.length; i++) {
+			sprite(bg, starting_offset, hy + offset_y);
+			sprite(contents[i], starting_offset, hy + offset_y);
+			starting_offset += offset_x;
+		}
+	}
+	else if (type == "cookery") {
+		for (let i = 0; i < contents.length; i++) {
+			sprite(bg, starting_offset, hy + offset_y);
+			sprite(contents[i].spr, starting_offset, hy + offset_y);
+			starting_offset += offset_x;
+		}
+	}
+}
+
+export function drawItemsInContainer(container) {
+	const bg = 48;
+	
+    if (typeof container.contents == "number"){ // finished dish
+        sprite(bg, container.x, container.y - 8);
+        sprite(container.contents, container.x, container.y - 8);
         return;
     }
 
-    let num = held_item.contents.length;
-    if (num == 0) {
-        return;
-    }
+    if (container.contents.length == 0) { return; }
 
-    let left_side = Math.floor(num / 2);
-    let offset_x = 0;
-    let offset_y = -8;
-
-    if (num % 2 == 0) {
-        offset_x = 9;
-        let extra_offset = 0;
-
-        let starting_offset = (held_item.x - 4) - (offset_x * (left_side - 1));
-
-        for (let i = 0; i < num; i++) {
-            sprite(48, starting_offset + extra_offset, held_item.y + offset_y);
-            sprite(held_item.contents[i].spr, starting_offset + extra_offset, held_item.y + offset_y);
-
-            starting_offset += offset_x;
-        }
-    }
-    else {
-        offset_x = 9;
-
-        let starting_offset = held_item.x - (offset_x * left_side);
-
-        for (let i = 0; i < num; i++) {
-            sprite(48, starting_offset, held_item.y + offset_y);
-            sprite(held_item.contents[i].spr, starting_offset, held_item.y + offset_y);
-            starting_offset += offset_x;
-        }
-    }
+	drawContents(container.contents, bg, container.x, container.y, "cookery");
 }
 
 export function drawMenus() {
@@ -943,28 +740,27 @@ export function drawTopItems() {
 	draw(map_counter_item, 0, -2);
 }
 
-
 export function drawBottomItems() {
     draw(map_floor_item, 0, 0);
 }
 
-
-export function printItems() {
-	console.log(items);
-}
+// DRAW END
 
 export function resetItems() {
-	clearItemMaps();
-	items = [];
-
-	for (let i = 0; i < item_tiles.length; i++) {
-		item_tiles[i].full = false;
+	for (const [key, item] of Object.entries(items)) {
+		item = -1;
 	}
 
-	addItem(cooking_utensil.pot, belts[0]);
-	addItem(cooking_utensil.pot, belts[3]);
-	addItem(cooking_utensil.fry_tray, belts[8]);
-	addItem(book.fryer_book, belts[5]);
-	addItem(book.stove_book, belts[10]);
-	addItem(cooking_utensil.infinite_plates, belts[12]);
+	for (const [key, item_tile] of Object.entries(item_tiles)) {
+		item_tile.full = false;
+	}
+
+	clearItemMaps();
+
+	for (const [key, s] of Object.entries(storages)) {
+		s.open = false;
+		s.current_selection = 0;
+	}
+
+	spawnSpotItems();
 }

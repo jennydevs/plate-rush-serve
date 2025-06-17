@@ -8,6 +8,9 @@ export var map_npc = getMap("npc");
 
 var map_floor = getMap("floor");
 var map_wall = getMap("walls");
+export var map_title = getMap("title");
+export var map_title_bg = getMap("title_bg");
+export var map_pause = getMap("pause");
 
 export function drawMap() {
     cls();
@@ -17,7 +20,7 @@ export function drawMap() {
 }
 
 export function setColors() {
-    paper(1);
+    paper(11);
     pen(0);
 }
 
